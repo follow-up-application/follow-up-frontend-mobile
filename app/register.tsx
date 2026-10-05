@@ -31,6 +31,47 @@ function formatearDni(dni: string): string {
   return dni.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+/** El backend (CreateTutorRequest) exige min:8, no 6. */
+const PASSWORD_MIN = 8;
+
+/** Mensajes por campo para el 422 de Laravel, que viene en inglés. */
+const ERRORES_VALIDACION: Record<string, string> = {
+  email: 'Revisá el correo electrónico. Es posible que ya esté registrado.',
+  password: `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`,
+  codigo_institucional: 'Revisá el código institucional.',
+};
+
+/**
+ * Traduce la respuesta fallida del registro al mensaje del campo que falló.
+ * Antes se mapeaba cualquier 422 al mismo texto, así que una contraseña de 6 o
+ * 7 caracteres se reportaba como "el código ya fue utilizado".
+ */
+async function mensajeDeErrorRegistro(response: Response): Promise<string> {
+  if (response.status === 404) {
+    return 'El código institucional ya no es válido. Volvé a validarlo.';
+  }
+
+  if (response.status !== 422 && response.status !== 409) {
+    return 'Ocurrió un error al registrarte. Intenta nuevamente.';
+  }
+
+  let errores: Record<string, string[]> | undefined;
+
+  try {
+    const body = (await response.json()) as { errors?: Record<string, string[]> } | null;
+    errores = body?.errors;
+  } catch {
+    errores = undefined;
+  }
+
+  const campo = errores ? Object.keys(errores)[0] : undefined;
+
+  return (
+    (campo ? ERRORES_VALIDACION[campo] : undefined) ??
+    'El código ya fue utilizado, o el correo ya está registrado.'
+  );
+}
+
 export default function CompletarRegistroTutorScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -66,8 +107,8 @@ export default function CompletarRegistroTutorScreen() {
     if (!password) {
       nuevosErrores.password = 'La contraseña es requerida';
       valid = false;
-    } else if (password.length < 6) {
-      nuevosErrores.password = 'La contraseña debe tener al menos 6 caracteres';
+    } else if (password.length < PASSWORD_MIN) {
+      nuevosErrores.password = `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres`;
       valid = false;
     }
 
@@ -109,13 +150,7 @@ export default function CompletarRegistroTutorScreen() {
       });
 
       if (!response.ok) {
-        if (response.status === 422 || response.status === 409) {
-          setErrorGeneral('El código ya fue utilizado, o el correo ya está registrado.');
-        } else if (response.status === 404) {
-          setErrorGeneral('El código institucional ya no es válido. Volvé a validarlo.');
-        } else {
-          setErrorGeneral('Ocurrió un error al registrarte. Intenta nuevamente.');
-        }
+        setErrorGeneral(await mensajeDeErrorRegistro(response));
         return;
       }
 

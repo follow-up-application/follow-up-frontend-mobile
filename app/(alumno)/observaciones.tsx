@@ -187,7 +187,7 @@ export default function ObservacionesAlumnoScreen() {
 
         {/* ── Bottom Bar ───────────────────────────────── */}
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
-          <TouchableOpacity style={styles.bottomBarItem} onPress={() => router.replace('/(alumno)/index')} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.bottomBarItem} onPress={() => router.replace('/(alumno)')} activeOpacity={0.7}>
             <MaterialIcons name="space-dashboard" size={24} color={PRIMARY} />
             <Text style={[styles.bottomBarText, { color: PRIMARY }]}>Inicio</Text>
           </TouchableOpacity>

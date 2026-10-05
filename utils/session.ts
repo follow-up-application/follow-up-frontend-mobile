@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
+import type { UserRole } from '@/types/auth';
 
-export type UserRole = 'administrador' | 'docente' | 'alumno' | 'tutor';
+export type { UserRole };
 
 export type Session = {
   token: string;
