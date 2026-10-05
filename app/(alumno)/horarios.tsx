@@ -174,7 +174,7 @@ export default function HorariosAlumnoScreen() {
 
         {/* ── Bottom Bar ───────────────────────────────── */}
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
-          <TouchableOpacity style={styles.bottomBarItem} onPress={() => router.replace('/(alumno)/index')} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.bottomBarItem} onPress={() => router.replace('/(alumno)')} activeOpacity={0.7}>
             <MaterialIcons name="space-dashboard" size={24} color={Colors.outline} />
             <Text style={styles.bottomBarText}>Inicio</Text>
           </TouchableOpacity>
