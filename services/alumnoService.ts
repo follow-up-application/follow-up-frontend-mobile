@@ -1,93 +1,31 @@
-import { getSession } from '@/utils/session';
-import {
-    CursoDivisionTurno,
-    Tutor,
+import { apiRequest, apiRequestVoid } from '@/services/httpClient';
+import type {
+    Alumno,
     CreateAlumnoRequest,
+    UpdateAlumnoRequest,
 } from '@/types/alumno';
-import { API_BASE_URL } from '@/config/api';
 
-async function getHeaders() {
-    const session = await getSession();
-
-    if (!session?.token) {
-        throw new Error('No existe una sesión iniciada.');
-    }
-
-    return {
-        Authorization: `Bearer ${session.token}`,
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-    };
+/** GET /alumnos — roles administrador y docente. */
+export function getAlumnos(): Promise<Alumno[]> {
+    return apiRequest<Alumno[]>('/alumnos');
 }
 
-/**
- * Obtiene todos los cursos.
- */
-export async function getCursosDivisionTurno(): Promise<CursoDivisionTurno[]> {
-
-    const response = await fetch(
-        `${API_BASE_URL}/cursoDivisionTurno`,
-        {
-            headers: await getHeaders(),
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error('No fue posible obtener los cursos.');
-    }
-
-    return response.json();
+/** POST /alumnos — roles administrador y docente. */
+export function crearAlumno(request: CreateAlumnoRequest): Promise<Alumno> {
+    return apiRequest<Alumno>('/alumnos', { method: 'POST', body: request });
 }
 
-/**
- * Busca un tutor por DNI.
- * Devuelve null si no existe.
- */
-export async function buscarTutorPorDni(
-    dni: string
-): Promise<Tutor | null> {
-
-    const response = await fetch(
-        `${API_BASE_URL}/tutores/dni/${dni}`,
-        {
-            headers: await getHeaders(),
-        }
-    );
-
-    if (response.status === 404) {
-        return null;
-    }
-
-    if (!response.ok) {
-        throw new Error('Error buscando tutor.');
-    }
-
-    return response.json();
+/** GET /alumnos/{id} — cualquier rol autenticado. */
+export function getAlumno(id: string): Promise<Alumno> {
+    return apiRequest<Alumno>(`/alumnos/${id}`);
 }
 
-/**
- * Crea un alumno.
- */
-export async function crearAlumno(
-    request: CreateAlumnoRequest
-): Promise<void> {
+/** PUT /alumnos/{id} — el controller no implementa update, responde 500. */
+export function updateAlumno(id: string, request: UpdateAlumnoRequest): Promise<Alumno> {
+    return apiRequest<Alumno>(`/alumnos/${id}`, { method: 'PUT', body: request });
+}
 
-    const response = await fetch(
-        `${API_BASE_URL}/alumnos`,
-        {
-            method: 'POST',
-            headers: await getHeaders(),
-            body: JSON.stringify(request),
-        }
-    );
-
-    if (!response.ok) {
-
-        const error = await response.json();
-
-        throw new Error(
-            error.message ??
-            'No fue posible crear el alumno.'
-        );
-    }
+/** DELETE /alumnos/{id} — responde 204. */
+export function deleteAlumno(id: string): Promise<void> {
+    return apiRequestVoid(`/alumnos/${id}`, { method: 'DELETE' });
 }

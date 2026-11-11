@@ -10,10 +10,8 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveSession, Session, UserRole } from '@/utils/session';
-import { API_BASE_URL } from '@/config/api';
-
-// TODO: mover a variable de entorno (.env / app.config.ts) antes de producción.
-// En emulador Android usar 'http://10.0.2.2:8000' en vez de 'localhost'.
+import { login as loginRequest } from '@/services/authService';
+import { mensajeDeError } from '@/services/httpClient';
 
 type LoginResponse = {
   token: string;
@@ -68,29 +66,11 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-
     try {
-      const body = JSON.stringify({ username: username.trim(), password });
-
-      const response = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body,
+      const data: LoginResponse = await loginRequest({
+        username: username.trim(),
+        password,
       });
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 422) {
-          setErrorGeneral('Usuario o contraseña incorrectos');
-        } else {
-          setErrorGeneral('Ocurrió un error al iniciar sesión. Intenta nuevamente.');
-        }
-        return;
-      }
-
-      const data: LoginResponse = await response.json();
 
       const session: Session = {
         token: data.token,
@@ -101,17 +81,24 @@ export default function LoginScreen() {
       };
 
       await saveSession(session);
-
+      
       const ruta = RUTA_POR_ROL[data.rol];
 
       if (!ruta) {
         setErrorGeneral('Rol de usuario no reconocido');
         return;
       }
-
       router.replace(ruta as any);
-    } catch (error) {
-      setErrorGeneral('No se pudo conectar con el servidor. Verifica tu conexión.');
+    } catch (error: any) {
+      const status = error?.status;
+
+      if (status === 401 || status === 422) {
+        setErrorGeneral('Usuario o contraseña incorrectos');
+      } else if (status === 0) {
+        setErrorGeneral(mensajeDeError(error));
+      } else {
+        setErrorGeneral('Ocurrió un error al iniciar sesión. Intenta nuevamente.');
+      }
     } finally {
       setLoading(false);
     }

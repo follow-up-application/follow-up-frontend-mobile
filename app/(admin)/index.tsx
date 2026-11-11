@@ -8,7 +8,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { API_BASE_URL } from '@/config/api';
+import { logout } from '@/services/authService';
+import { getAdminStatistics } from '@/services/adminService';
 
 
 export default function AdminDashboard() {
@@ -38,19 +39,8 @@ export default function AdminDashboard() {
 
             setSession(s);
 
-            const response = await fetch(
-                `${API_BASE_URL}/admins/estadisticas`,
-                {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${s.token}`,
-                        Accept: 'application/json',
-                    },
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
+            try {
+                const data = await getAdminStatistics();
 
                 setStatsData([
                     {
@@ -68,6 +58,8 @@ export default function AdminDashboard() {
                         iconColor: '#625B71',
                     },
                 ]);
+            } catch {
+                // el panel muestra los contadores en 0 si la API no responde
             }
 
             setLoadingSession(false);
@@ -86,7 +78,10 @@ export default function AdminDashboard() {
         { id: '5', icon: 'people', label: 'Listado de Alumnos', onPress: () => router.push('/(admin)/listado-alumnos' as any) },
         { id: '2', icon: 'supervisor-account', label: 'Cargar Docente', onPress: () => router.push('/(admin)/cargar-docente' as any) },
         { id: '6', icon: 'school', label: 'Listado de Docentes', onPress: () => router.push('/(admin)/listado-docentes' as any) },
+        { id: '8', icon: 'menu-book', label: 'Cargar Materia', onPress: () => router.push('/(admin)/cargar-materia' as any) },
+        { id: '9', icon: 'library-books', label: 'Listado de Materias', onPress: () => router.push('/(admin)/listado-materias' as any) },
         { id: '3', icon: 'domain', label: 'Cargar Curso / División', onPress: () => router.push('/(admin)/cargar-curso' as any) },
+        { id: '7', icon: 'fact-check', label: 'Verificar API', onPress: () => router.push('/(admin)/verificar-api' as any) },
     ];
 
     const drawerItems: DrawerMenuItem[] = [
@@ -95,14 +90,22 @@ export default function AdminDashboard() {
         { icon: 'people', label: 'Listado de Alumnos', onPress: () => router.push('/(admin)/listado-alumnos' as any) },
         { icon: 'supervisor-account', label: 'Cargar Docente', onPress: () => router.push('/(admin)/cargar-docente' as any) },
         { icon: 'school', label: 'Listado de Docentes', onPress: () => router.push('/(admin)/listado-docentes' as any) },
+        { icon: 'menu-book', label: 'Cargar Materia', onPress: () => router.push('/(admin)/cargar-materia' as any) },
+        { icon: 'library-books', label: 'Listado de Materias', onPress: () => router.push('/(admin)/listado-materias' as any) },
         { icon: 'domain', label: 'Cargar Curso / División', onPress: () => router.push('/(admin)/cargar-curso' as any) },
+        { icon: 'fact-check', label: 'Verificar API', onPress: () => router.push('/(admin)/verificar-api' as any) },
         { icon: 'settings', label: 'Configuración del Sistema' },
     ];
 
     const handleLogout = async () => {
-        // TODO: si el backend tiene endpoint de logout (revocar token Sanctum),
-        // llamarlo acá antes de limpiar la sesión local:
-        // await fetch(`${API_BASE_URL}/logout`, { method: 'POST', headers: { Authorization: `Bearer ${session?.token}` } });
+        // Si el backend no responde, un fallo acá no debe impedir el cierre de
+        // sesión local.
+        try {
+            await logout();
+        } catch {
+            // se ignora a propósito
+        }
+
         await clearSession();
         router.replace('/login');
     };

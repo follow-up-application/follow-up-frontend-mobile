@@ -1,13 +1,20 @@
-import { PrimaryButton } from '@/components/atoms/PrimaryButton';
-import { OutlinedButton } from '@/components/atoms/OutlinedButton';
 import { Input } from '@/components/atoms/Input';
+import { OutlinedButton } from '@/components/atoms/OutlinedButton';
+import { PrimaryButton } from '@/components/atoms/PrimaryButton';
+import SelectInput, { SelectOption } from '@/components/atoms/SelectInput';
 import { FormField } from '@/components/molecules/FormField';
-import SelectInput from '@/components/atoms/SelectInput';
+import ValidationCard from '@/components/molecules/ValidationCard';
 import { Colors } from '@/constants/Colors';
+import { getCursosDivisionTurno } from '@/services/cursoDivisionTurnoService';
+import { getDocentes } from '@/services/docenteService';
+import { crearMateria, getMateria, updateMateria } from '@/services/materiaService';
+import type { Materia } from '@/types/materia';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
-import { esNombreValido, esDniValido, esEmailValido, esTelefonoValido } from '@/utils/validations'; import {
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,95 +24,169 @@ import { esNombreValido, esDniValido, esEmailValido, esTelefonoValido } from '@/
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ValidationCard from '@/components/molecules/ValidationCard';
-const MATERIAS = [
-  { label: 'Matemáticas', value: 'Matemáticas' },
-  { label: 'Prácticas del Lenguaje', value: 'Prácticas del Lenguaje' },
-  { label: 'Ciencias Naturales', value: 'Ciencias Naturales' },
-  { label: 'Ciencias Sociales', value: 'Ciencias Sociales' },
-  { label: 'Educación Física', value: 'Educación Física' },
-  { label: 'Inglés', value: 'Inglés' },
-  { label: 'Arte', value: 'Arte' },
-];
 
-const GRADOS = [
-  { label: '1', value: '1' },
-  { label: '2', value: '2' },
-  { label: '3', value: '3' },
-  { label: '4', value: '4' },
-  { label: '5', value: '5' },
-  { label: '6', value: '6' },
-  { label: '7', value: '7' },
-  { label: '8', value: '8' },
-  { label: '9', value: '9' },
-];
+const NOMBRE_MAX = 150;
+const DESCRIPCION_MAX = 1000;
 
-const DIVISIONES = [
-  { label: '1', value: '1' },
-  { label: '2', value: '2' },
-  { label: '3', value: '3' },
-  { label: '4', value: '4' },
-  { label: '5', value: '5' },
-  { label: 'A', value: 'A' },
-  { label: 'B', value: 'B' },
-  { label: 'C', value: 'C' },
-  { label: 'D', value: 'D' },
-  { label: 'E', value: 'E' },
-];
-
-const TURNOS = [
-  { label: 'Mañana', value: 'Mañana' },
-  { label: 'Tarde', value: 'Tarde' },
-];
-export default function CargarDocenteScreen() {
+export default function CargarMateriaScreen() {
   const router = useRouter();
-  // Extraemos la señal para saber si estamos editando
-  const { edit } = useLocalSearchParams<{ edit?: string }>();
-  const isEditing = edit === 'true';
-  // Datos Personales
-  const [apellido, setApellido] = useState('');
+  const { id, edit } = useLocalSearchParams<{ id?: string; edit?: string }>();
+
+  const materiaId = id ? Number(id) : null;
+  const isEditing = edit === 'true' && Number.isFinite(materiaId);
+
   const [nombre, setNombre] = useState('');
-  const [dni, setDni] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [cursoId, setCursoId] = useState<number | null>(null);
+  const [docenteId, setDocenteId] = useState<string | null>(null);
 
-  // Contacto y Asignaciones
-  const [email, setEmail] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [materia, setMateria] = useState(''); // Ahora es un texto simple
-  const [grado, setGrado] = useState('');
-  const [division, setDivision] = useState('');
-  const [turno, setTurno] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [cursoOptions, setCursoOptions] = useState<SelectOption[]>([]);
+  const [docenteOptions, setDocenteOptions] = useState<SelectOption[]>([]);
 
-  // Lógica de validación dinámica
-  // Lógica de validación dinámica detallada
-  const obtenerErrores = () => {
-    const errs: string[] = [];
+  const [loadingCatalogos, setLoadingCatalogos] = useState(true);
+  const [loadingMateria, setLoadingMateria] = useState(isEditing);
+  const [saving, setSaving] = useState(false);
+  const [errorGeneral, setErrorGeneral] = useState('');
 
-    // 1. Revisamos campos vacíos
-    if (!apellido || !nombre || !dni || !email || !telefono || !materia || !grado || !division || !turno) {
-      errs.push('Faltan completar campos obligatorios');
+  // Los selectores de curso y docente vienen de la API: no hay catálogo local.
+  useEffect(() => {
+    let vigente = true;
+
+    (async () => {
+      try {
+        const [cursos, docentes] = await Promise.all([getCursosDivisionTurno(), getDocentes()]);
+
+        if (!vigente) return;
+
+        setCursoOptions(
+          cursos.map((curso) => ({
+            label: `${curso.curso}° ${curso.division} - ${curso.turno}`,
+            value: curso.id,
+          }))
+        );
+
+        setDocenteOptions(
+          docentes.map((docente) => ({
+            label: `${docente.first_name} ${docente.last_name}`,
+            value: docente.id,
+          }))
+        );
+      } catch {
+        if (vigente) {
+          setErrorGeneral('No se pudieron cargar los cursos y docentes.');
+        }
+      } finally {
+        if (vigente) {
+          setLoadingCatalogos(false);
+        }
+      }
+    })();
+
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
+  // En modo edición precargamos la materia existente.
+  useEffect(() => {
+    if (!isEditing || !Number.isFinite(materiaId)) {
+      return;
     }
 
-    // 2. Revisamos formatos incorrectos (solo si están escritos)
-    if (apellido && !esNombreValido(apellido)) errs.push('El apellido solo puede contener letras');
-    if (nombre && !esNombreValido(nombre)) errs.push('El nombre solo puede contener letras');
-    if (dni && !esDniValido(dni)) errs.push('El DNI debe tener entre 7 y 8 números');
-    if (email && !esEmailValido(email)) errs.push('El correo no tiene un formato válido');
-    if (telefono && !esTelefonoValido(telefono)) errs.push('El teléfono tiene un formato inválido');
+    let vigente = true;
 
-    return errs;
-  };
+    (async () => {
+      try {
+        const materia: Materia = await getMateria(materiaId as number);
 
-  const erroresFormulario = obtenerErrores();
+        if (!vigente) return;
 
-  const handleGuardar = () => {
-    if (erroresFormulario.length > 0) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+        setNombre(materia.nombre);
+        setDescripcion(materia.descripcion);
+        setCursoId(materia.curso_division_turno_id);
+        setDocenteId(materia.docente_id);
+      } catch {
+        if (vigente) {
+          setErrorGeneral('No se pudo cargar la materia a editar.');
+        }
+      } finally {
+        if (vigente) {
+          setLoadingMateria(false);
+        }
+      }
+    })();
+
+    return () => {
+      vigente = false;
+    };
+  }, [isEditing, materiaId]);
+
+  const errores: string[] = [];
+
+  if (!nombre.trim()) {
+    errores.push('El nombre de la materia es obligatorio');
+  } else if (nombre.trim().length > NOMBRE_MAX) {
+    errores.push(`El nombre no puede superar los ${NOMBRE_MAX} caracteres`);
+  }
+
+  if (!descripcion.trim()) {
+    errores.push('La descripción es obligatoria');
+  } else if (descripcion.trim().length > DESCRIPCION_MAX) {
+    errores.push(`La descripción no puede superar los ${DESCRIPCION_MAX} caracteres`);
+  }
+
+  if (cursoId === null) {
+    errores.push('Seleccioná el curso, división y turno');
+  }
+
+  if (!docenteId) {
+    errores.push('Seleccioná el docente a cargo');
+  }
+
+  const handleGuardar = async () => {
+    if (errores.length > 0) {
+      return;
+    }
+
+    setSaving(true);
+    setErrorGeneral('');
+
+    const payload = {
+      nombre: nombre.trim(),
+      descripcion: descripcion.trim(),
+      curso_division_turno_id: cursoId as number,
+      docente_id: docenteId as string,
+    };
+
+    try {
+      if (isEditing) {
+        await updateMateria(materiaId as number, payload);
+      } else {
+        await crearMateria(payload);
+      }
+
       router.back();
-    }, 1500);
+    } catch (error) {
+      const mensaje =
+        error instanceof Error ? error.message : 'No se pudo guardar la materia.';
+
+      setErrorGeneral(mensaje);
+      Alert.alert('Error', mensaje);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loadingCatalogos || loadingMateria) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
@@ -113,10 +194,10 @@ export default function CargarDocenteScreen() {
           <MaterialIcons name="arrow-back" size={24} color={Colors.neutral} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {isEditing ? 'Editar Docente' : 'Cargar Docente'}
+          {isEditing ? 'Editar Materia' : 'Cargar Materia'}
         </Text>
         <View style={styles.avatarSmall}>
-          <MaterialIcons name="person" size={18} color={Colors.onPrimary} />
+          <MaterialIcons name="menu-book" size={18} color={Colors.onPrimary} />
         </View>
       </View>
 
@@ -130,87 +211,81 @@ export default function CargarDocenteScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <Text style={styles.sectionTitle}>Datos de la Materia</Text>
+          <Text style={styles.sectionSubtitle}>
+            {isEditing
+              ? 'Modificá los datos de la materia y guardá los cambios.'
+              : 'Completá los detalles para registrar una nueva materia.'}
+          </Text>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <MaterialIcons name="person-outline" size={16} color={Colors.secondary} />
-              <Text style={styles.sectionLabel}>INFORMACIÓN PERSONAL</Text>
+              <MaterialIcons name="menu-book" size={16} color={Colors.secondary} />
+              <Text style={styles.sectionLabel}>INFORMACIÓN</Text>
             </View>
-            <FormField label="Apellido">
-              <Input
-                iconName="person-outline"
-                placeholder="Ej: González"
-                value={apellido}
-                onChangeText={setApellido}
-                autoCapitalize="words"
-              />
-            </FormField>
 
             <FormField label="Nombre">
               <Input
-                iconName="person-outline"
-                placeholder="Ej: María"
+                iconName="menu-book"
+                placeholder="Ej: Matemática"
                 value={nombre}
                 onChangeText={setNombre}
-                autoCapitalize="words"
+                maxLength={NOMBRE_MAX}
               />
             </FormField>
 
-            <FormField label="DNI / Identificación">
+            <FormField label="Descripción">
               <Input
-                iconName="badge"
-                placeholder="Ej: 30123456"
-                value={dni}
-                onChangeText={setDni}
-                keyboardType="numeric"
+                iconName="notes"
+                placeholder="Ej: Álgebra y análisis matemático."
+                value={descripcion}
+                onChangeText={setDescripcion}
+                maxLength={DESCRIPCION_MAX}
+                multiline
+                numberOfLines={4}
+                style={{ minHeight: 96, textAlignVertical: 'top' }}
               />
             </FormField>
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="contact-mail" size={16} color={Colors.secondary} />
-              <Text style={styles.sectionLabel}>CONTACTO</Text>
-            </View>
-
-            <FormField label="Email docente">
-              <Input
-                iconName="mail-outline"
-                placeholder="docente@escuela.edu.ar"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </FormField>
-
-            <FormField label="Teléfono">
-              <Input
-                iconName="phone"
-                placeholder="Ej: +54 9 11 1234-5678"
-                value={telefono}
-                onChangeText={setTelefono}
-                keyboardType="phone-pad"
-              />
-            </FormField>
-          </View>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="school" size={16} color={Colors.secondary} />
               <Text style={styles.sectionLabel}>ASIGNACIÓN ACADÉMICA</Text>
             </View>
 
-            <SelectInput label="Materia que dicta" iconName="menu-book" placeholder="Seleccionar materia..." value={materia} options={MATERIAS} onChange={(value) => setMateria(String(value))} />
-            <SelectInput label="Grado / Año asignado" iconName="school" placeholder="Seleccionar grado..." value={grado} options={GRADOS} onChange={(value) => setGrado(String(value))} />
-            <SelectInput label="División" iconName="class" placeholder="Seleccionar división..." value={division} options={DIVISIONES} onChange={(value) => setDivision(String(value))} />
-            <SelectInput label="Turno" iconName="schedule" placeholder="Seleccionar turno..." value={turno} options={TURNOS} onChange={(value) => setTurno(String(value))} />
+            <SelectInput
+              label="Curso / División / Turno"
+              iconName="school"
+              placeholder="Seleccionar curso..."
+              value={cursoId}
+              options={cursoOptions}
+              onChange={(value) => setCursoId(Number(value))}
+            />
+
+            <SelectInput
+              label="Docente a cargo"
+              iconName="person"
+              placeholder="Seleccionar docente..."
+              value={docenteId}
+              options={docenteOptions}
+              onChange={(value) => setDocenteId(String(value))}
+            />
           </View>
+
+          {errorGeneral.length > 0 && (
+            <View style={styles.errorCard}>
+              <MaterialIcons name="error-outline" size={20} color={Colors.error} />
+              <Text style={styles.errorCardText}>{errorGeneral}</Text>
+            </View>
+          )}
+
           <View style={styles.actions}>
-            <ValidationCard errors={erroresFormulario} />
+            <ValidationCard errors={errores} />
             <PrimaryButton
-              title={isEditing ? 'Guardar Cambios' : 'Guardar Docente'}
+              title={isEditing ? 'Guardar Cambios' : 'Guardar Materia'}
               onPress={handleGuardar}
-              isLoading={isLoading}
+              isLoading={saving}
               style={styles.primaryBtn}
             />
             <OutlinedButton
@@ -232,6 +307,11 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -268,22 +348,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  heroBanner: {
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 28,
-  },
-  heroTitle: {
+  sectionTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: Colors.white,
+    color: Colors.neutral,
     marginBottom: 6,
   },
-  heroSubtitle: {
+  sectionSubtitle: {
     fontSize: 13,
-    color: `${Colors.white}CC`,
+    color: Colors.secondary,
     lineHeight: 18,
+    marginBottom: 24,
   },
   section: {
     marginBottom: 24,
@@ -299,6 +374,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.secondary,
     letterSpacing: 0.8,
+  },
+  errorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: `${Colors.error}12`,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorCardText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.error,
+    fontWeight: '500',
   },
   actions: {
     gap: 12,
