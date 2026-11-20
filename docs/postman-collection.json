@@ -1,0 +1,1318 @@
+{
+  "info": {
+    "name": "Follow-up Backend API",
+    "_postman_id": "follow-up-backend-collection",
+    "description": "Colección de Postman para la API REST del sistema Follow-up (Laravel 11). Base URL: http://127.0.0.1:8000/api/v1\n\nAutenticación: Laravel Sanctum (Bearer token). Obtener token con POST /login y usarlo en el header Authorization: Bearer <token>.\n\nRoles: administrador, docente, tutor, alumno.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"alumno@mail.com\",\n    \"password\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "login"]
+            },
+            "description": "Inicia sesión y devuelve un token Bearer. Guardar el token para usarlo en endpoints protegidos."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logout"]
+            },
+            "description": "Cierra la sesión eliminando el token actual."
+          }
+        },
+        {
+          "name": "Cambiar contraseña",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"password\": \"nuevaPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "password"]
+            },
+            "description": "Cambia la contraseña del usuario autenticado. Cualquier rol autenticado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios (base)",
+      "item": [
+        {
+          "name": "Crear usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Juan\",\n    \"last_name\": \"Pérez\",\n    \"dni\": 12345678,\n    \"username\": \"juanperez\",\n    \"password\": \"12345678\",\n    \"role\": \"alumno\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Registra un nuevo usuario. Público."
+          }
+        },
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Lista todos los usuarios. Rol: administrador."
+          }
+        },
+        {
+          "name": "Obtener usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            },
+            "description": "Obtiene un usuario por ID. Rol: administrador."
+          }
+        },
+        {
+          "name": "Actualizar usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Juan Carlos\",\n    \"last_name\": \"Pérez Gómez\",\n    \"dni\": 12345678,\n    \"username\": \"juancperez\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            },
+            "description": "Actualiza un usuario. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un usuario. Rol: administrador."
+          }
+        },
+        {
+          "name": "Perfil del usuario autenticado (me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            },
+            "description": "Obtiene los datos del usuario autenticado. Todos los roles autenticados."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alumnos",
+      "item": [
+        {
+          "name": "Crear alumno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"María\",\n    \"last_name\": \"González\",\n    \"dni\": 87654321,\n    \"fecha_nacimiento\": \"2005-03-15\",\n    \"curso_division_turno_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos"]
+            },
+            "description": "Crea un alumno. Roles: administrador, docente."
+          }
+        },
+        {
+          "name": "Listar alumnos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos"]
+            },
+            "description": "Lista todos los alumnos. Roles: administrador, docente."
+          }
+        },
+        {
+          "name": "Obtener alumno por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos/{{alumnoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos", "{{alumnoId}}"]
+            },
+            "description": "Obtiene un alumno por ID. Roles: administrador, docente, tutor, alumno."
+          }
+        },
+        {
+          "name": "Actualizar alumno",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"María Elena\",\n    \"fecha_nacimiento\": \"2005-03-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos/{{alumnoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos", "{{alumnoId}}"]
+            },
+            "description": "Actualiza un alumno (campos opcionales). Roles: administrador, docente."
+          }
+        },
+        {
+          "name": "Inhabilitar alumno",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos/{{alumnoId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos", "{{alumnoId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un alumno. Roles: administrador, docente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Docentes",
+      "item": [
+        {
+          "name": "Crear docente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Carlos\",\n    \"last_name\": \"Rodríguez\",\n    \"dni\": 11223344,\n    \"telephone\": \"3512345678\",\n    \"fecha_ingreso\": \"2020-03-01\",\n    \"curso_division_turno_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "docentes"]
+            },
+            "description": "Crea un docente. Rol: administrador."
+          }
+        },
+        {
+          "name": "Listar docentes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "docentes"]
+            },
+            "description": "Lista todos los docentes. Rol: administrador."
+          }
+        },
+        {
+          "name": "Obtener docente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docentes/{{docenteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "docentes", "{{docenteId}}"]
+            },
+            "description": "Obtiene un docente por ID. Rol: administrador."
+          }
+        },
+        {
+          "name": "Actualizar docente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"telephone\": \"3519876543\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docentes/{{docenteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "docentes", "{{docenteId}}"]
+            },
+            "description": "Actualiza un docente. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar docente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docentes/{{docenteId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "docentes", "{{docenteId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un docente. Rol: administrador."
+          }
+        },
+        {
+          "name": "Materias de un docente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/docentes/{{docenteId}}/materias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "docentes", "{{docenteId}}", "materias"]
+            },
+            "description": "Lista las materias de un docente. Roles: administrador, docente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tutores",
+      "item": [
+        {
+          "name": "Registrar tutor (público)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Ana\",\n    \"last_name\": \"López\",\n    \"dni\": 22334455,\n    \"telephone\": \"3511112222\",\n    \"email\": \"ana@mail.com\",\n    \"password\": \"12345678\",\n    \"codigo_institucional\": \"COD-123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "register"]
+            },
+            "description": "Registro público de tutor. Requiere código institucional válido."
+          }
+        },
+        {
+          "name": "Validar código de tutor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/validarCodigo/{codigo}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "validarCodigo", "{codigo}"]
+            },
+            "description": "Valida un código institucional de pre-registro de tutor. Público."
+          }
+        },
+        {
+          "name": "Crear tutor (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Luis\",\n    \"last_name\": \"Martínez\",\n    \"dni\": 33445566,\n    \"telephone\": \"3513334444\",\n    \"email\": \"luis@mail.com\",\n    \"password\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores"]
+            },
+            "description": "Crea un tutor directamente (sin pre-registro). Rol: administrador."
+          }
+        },
+        {
+          "name": "Listar tutores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores"]
+            },
+            "description": "Lista todos los tutores. Rol: administrador."
+          }
+        },
+        {
+          "name": "Obtener tutor por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/{{tutorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "{{tutorId}}"]
+            },
+            "description": "Obtiene un tutor por ID. Roles: administrador, tutor."
+          }
+        },
+        {
+          "name": "Buscar tutor por DNI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/dni/{{dni}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "dni", "{{dni}}"]
+            },
+            "description": "Busca un tutor por DNI. Roles: administrador, tutor."
+          }
+        },
+        {
+          "name": "Alumnos de un tutor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/{{tutorId}}/alumnos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "{{tutorId}}", "alumnos"]
+            },
+            "description": "Lista los alumnos a cargo de un tutor. Roles: administrador, tutor."
+          }
+        },
+        {
+          "name": "Actualizar tutor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"telephone\": \"3515556666\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/{{tutorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "{{tutorId}}"]
+            },
+            "description": "Actualiza un tutor. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar tutor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutores/{{tutorId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutores", "{{tutorId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un tutor. Rol: administrador."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Administradores",
+      "item": [
+        {
+          "name": "Registrar admin (público)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Admin\",\n    \"last_name\": \"Sistema\",\n    \"dni\": 99999999,\n    \"username\": \"admin\",\n    \"password\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins", "register"]
+            },
+            "description": "Registro público de administrador."
+          }
+        },
+        {
+          "name": "Crear admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Admin2\",\n    \"last_name\": \"Sistema\",\n    \"dni\": 88888888,\n    \"username\": \"admin2\",\n    \"password\": \"12345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins"]
+            },
+            "description": "Crea un administrador. Rol: administrador."
+          }
+        },
+        {
+          "name": "Listar admins",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins"]
+            },
+            "description": "Lista todos los administradores. Rol: administrador."
+          }
+        },
+        {
+          "name": "Obtener admin por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins/{{adminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins", "{{adminId}}"]
+            },
+            "description": "Obtiene un administrador por ID. Rol: administrador."
+          }
+        },
+        {
+          "name": "Actualizar admin",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Admin Actualizado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins/{{adminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins", "{{adminId}}"]
+            },
+            "description": "Actualiza un administrador. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar admin",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins/{{adminId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins", "{{adminId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un administrador. Rol: administrador."
+          }
+        },
+        {
+          "name": "Estadísticas de admins",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admins/estadisticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admins", "estadisticas"]
+            },
+            "description": "Obtiene estadísticas (total alumnos, total tutores). Rol: administrador."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Curso División Turno",
+      "item": [
+        {
+          "name": "Crear CDT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"curso\": \"5to\",\n    \"division\": \"A\",\n    \"turno\": \"Mañana\",\n    \"capacidad_maxima\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cursoDivisionTurno",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cursoDivisionTurno"]
+            },
+            "description": "Crea un curso/división/turno. Rol: administrador."
+          }
+        },
+        {
+          "name": "Listar CDT",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cursoDivisionTurno",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cursoDivisionTurno"]
+            },
+            "description": "Lista todos los CDT. Rol: administrador."
+          }
+        },
+        {
+          "name": "Obtener CDT por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cursoDivisionTurno/{{cdtId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cursoDivisionTurno", "{{cdtId}}"]
+            },
+            "description": "Obtiene un CDT por ID. Rol: administrador."
+          }
+        },
+        {
+          "name": "Actualizar CDT",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"capacidad_maxima\": 35\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cursoDivisionTurno/{{cdtId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cursoDivisionTurno", "{{cdtId}}"]
+            },
+            "description": "Actualiza un CDT. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar CDT",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cursoDivisionTurno/{{cdtId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cursoDivisionTurno", "{{cdtId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un curso/división/turno. Rol: administrador."
+          }
+        },
+        {
+          "name": "Materias de un CDT",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cursoDivisionTurno/{{cdtId}}/materias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cursoDivisionTurno", "{{cdtId}}", "materias"]
+            },
+            "description": "Lista las materias de un CDT. Roles: administrador, docente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Materias",
+      "item": [
+        {
+          "name": "Crear materia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Matemática\",\n    \"descripcion\": \"Álgebra y geometría\",\n    \"curso_division_turno_id\": 1,\n    \"docente_id\": \"{{docenteId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/materias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "materias"]
+            },
+            "description": "Crea una materia. Rol: administrador."
+          }
+        },
+        {
+          "name": "Listar materias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/materias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "materias"]
+            },
+            "description": "Lista todas las materias. Rol: administrador."
+          }
+        },
+        {
+          "name": "Obtener materia por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/materias/{{materiaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "materias", "{{materiaId}}"]
+            },
+            "description": "Obtiene una materia por ID. Rol: administrador."
+          }
+        },
+        {
+          "name": "Actualizar materia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"descripcion\": \"Álgebra, geometría y trigonometría\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/materias/{{materiaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "materias", "{{materiaId}}"]
+            },
+            "description": "Actualiza una materia. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar materia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/materias/{{materiaId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "materias", "{{materiaId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) una materia. Rol: administrador."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inscripciones",
+      "item": [
+        {
+          "name": "Crear inscripción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"alumno_id\": \"{{alumnoId}}\",\n    \"materia_id\": {{materiaId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inscripciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inscripciones"]
+            },
+            "description": "Inscribe a un alumno en una materia. Roles: administrador, alumno."
+          }
+        },
+        {
+          "name": "Listar inscripciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inscripciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inscripciones"]
+            },
+            "description": "Lista todas las inscripciones. Roles: administrador, alumno."
+          }
+        },
+        {
+          "name": "Obtener inscripción por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inscripciones/{{inscripcionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inscripciones", "{{inscripcionId}}"]
+            },
+            "description": "Obtiene una inscripción por ID. Roles: administrador, alumno."
+          }
+        },
+        {
+          "name": "Inscripciones de un alumno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos/{{alumnoId}}/inscripciones?estado=pendiente",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos", "{{alumnoId}}", "inscripciones"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "pendiente",
+                  "description": "Filtro opcional: pendiente, aprobado, rechazado"
+                }
+              ]
+            },
+            "description": "Lista las inscripciones de un alumno. Roles: administrador, alumno."
+          }
+        },
+        {
+          "name": "Inscripciones de una materia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/materias/{{materiaId}}/inscripciones?estado=aprobado",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "materias", "{{materiaId}}", "inscripciones"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "aprobado",
+                  "description": "Filtro opcional: pendiente, aprobado, rechazado"
+                }
+              ]
+            },
+            "description": "Lista las inscripciones de una materia. Roles: administrador, docente."
+          }
+        },
+        {
+          "name": "Cambiar estado de inscripción",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"estado\": \"aprobado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inscripciones/{{inscripcionId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inscripciones", "{{inscripcionId}}", "estado"]
+            },
+            "description": "Cambia el estado de una inscripción (pendiente/aprobado/rechazado). Roles: administrador, docente."
+          }
+        },
+        {
+          "name": "Eliminar inscripción (no permitido)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inscripciones/{{inscripcionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inscripciones", "{{inscripcionId}}"]
+            },
+            "description": "No se permite eliminar inscripciones. Usar Cambiar estado de inscripción con estado=rechazado. Rol: administrador."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vínculos Tutor-Alumno",
+      "item": [
+        {
+          "name": "Crear vínculo tutor-alumno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"alumno_id\": \"{{alumnoId}}\",\n    \"tutor_id\": \"{{tutorId}}\",\n    \"relationship\": \"madre\",\n    \"otra_relacion\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutor-alumno",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutor-alumno"]
+            },
+            "description": "Asigna un tutor a un alumno. Rol: administrador."
+          }
+        },
+        {
+          "name": "Inhabilitar vínculo tutor-alumno",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tutor-alumno/{{tutorAlumnoId}}/inhabilitar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tutor-alumno", "{{tutorAlumnoId}}", "inhabilitar"]
+            },
+            "description": "Inhabilita (soft delete) un vínculo tutor-alumno. Rol: administrador."
+          }
+        },
+        {
+          "name": "Tutores de un alumno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/alumnos/{{alumnoId}}/tutores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "alumnos", "{{alumnoId}}", "tutores"]
+            },
+            "description": "Lista los tutores de un alumno. Roles: administrador, tutor, alumno."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "description": "URL base de la API (ej: http://127.0.0.1:8000)"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Token de autenticación Sanctum (obtener con POST /login)"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "description": "ID de usuario (UUID)"
+    },
+    {
+      "key": "alumnoId",
+      "value": "",
+      "description": "ID de alumno (UUID)"
+    },
+    {
+      "key": "docenteId",
+      "value": "",
+      "description": "ID de docente (UUID)"
+    },
+    {
+      "key": "tutorId",
+      "value": "",
+      "description": "ID de tutor (UUID)"
+    },
+    {
+      "key": "adminId",
+      "value": "",
+      "description": "ID de administrador (UUID)"
+    },
+    {
+      "key": "cdtId",
+      "value": "",
+      "description": "ID de curso/división/turno"
+    },
+    {
+      "key": "materiaId",
+      "value": "",
+      "description": "ID de materia"
+    },
+    {
+      "key": "inscripcionId",
+      "value": "",
+      "description": "ID de inscripción"
+    },
+    {
+      "key": "tutorAlumnoId",
+      "value": "",
+      "description": "ID de vínculo tutor-alumno (UUID)"
+    },
+    {
+      "key": "dni",
+      "value": "",
+      "description": "DNI de tutor"
+    },
+    {
+      "key": "codigo",
+      "value": "",
+      "description": "Código institucional de tutor"
+    }
+  ]
+}
