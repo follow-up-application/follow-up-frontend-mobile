@@ -1,6 +1,10 @@
 import { Colors } from '@/constants/Colors';
 import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
-import { getUsuarios } from '@/services/userService';
+import {
+  getUsuarios,
+  getUsuariosInhabilitados,
+  habilitarUsuario,
+} from '@/services/userService';
 import type { ApiUser } from '@/types/auth';
 import { getSession } from '@/utils/session';
 import { colorPorRol, etiquetaRol } from '@/utils/usuarios';
@@ -9,6 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -18,13 +23,17 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+type EstadoUsuarios = 'activos' | 'inhabilitados';
+
 export default function ListadoUsuariosScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  const [estado, setEstado] = useState<EstadoUsuarios>('activos');
   const [busqueda, setBusqueda] = useState('');
   const [usuarios, setUsuarios] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [habilitandoId, setHabilitandoId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const cargarUsuarios = useCallback(async () => {
@@ -39,7 +48,10 @@ export default function ListadoUsuariosScreen() {
         return;
       }
 
-      const data = await getUsuarios();
+      const data = estado === 'inhabilitados'
+        ? await getUsuariosInhabilitados()
+        : await getUsuarios();
+
       setUsuarios(data);
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 401) {
@@ -51,7 +63,7 @@ export default function ListadoUsuariosScreen() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [estado, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,6 +76,42 @@ export default function ListadoUsuariosScreen() {
 
     return texto.includes(busqueda.trim().toLowerCase());
   });
+
+  const verInhabilitados = estado === 'inhabilitados';
+
+  const habilitar = async (usuario: ApiUser) => {
+    setHabilitandoId(usuario.id);
+
+    try {
+      await habilitarUsuario(usuario.id);
+
+      Alert.alert('Usuario habilitado', 'El usuario puede volver a iniciar sesión.', [
+        { text: 'OK', onPress: () => cargarUsuarios() },
+      ]);
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 401) {
+        router.replace('/login');
+        return;
+      }
+
+      Alert.alert('Error', mensajeDeError(err, 'No se pudo habilitar el usuario.'));
+    } finally {
+      setHabilitandoId(null);
+    }
+  };
+
+  const confirmarHabilitacion = (usuario: ApiUser) => {
+    const nombre = `${usuario.firstName} ${usuario.lastName}`.trim();
+
+    Alert.alert(
+      'Habilitar usuario',
+      `¿Querés volver a habilitar a ${nombre}? El usuario podrá iniciar sesión nuevamente.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Habilitar', onPress: () => habilitar(usuario) },
+      ]
+    );
+  };
 
   return (
     <View style={styles.root}>
@@ -95,6 +143,25 @@ export default function ListadoUsuariosScreen() {
               </TouchableOpacity>
             )}
           </View>
+          <View style={styles.tabs}>
+            <TouchableOpacity
+              style={[styles.tab, !verInhabilitados && styles.tabActivo]}
+              onPress={() => setEstado('activos')}
+            >
+              <Text style={[styles.tabText, !verInhabilitados && styles.tabTextActivo]}>
+                Activos
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, verInhabilitados && styles.tabActivo]}
+              onPress={() => setEstado('inhabilitados')}
+            >
+              <Text style={[styles.tabText, verInhabilitados && styles.tabTextActivo]}>
+                Inhabilitados
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.contador}>
             {filtrados.length} {filtrados.length === 1 ? 'usuario' : 'usuarios'}
           </Text>
@@ -121,6 +188,39 @@ export default function ListadoUsuariosScreen() {
             onRefresh={cargarUsuarios}
             renderItem={({ item }) => {
               const nombreCompleto = `${item.firstName} ${item.lastName}`.trim();
+              const contenido = (
+                <>
+                  <View style={[styles.avatar, { backgroundColor: colorPorRol(item.role) }]}>
+                    <Text style={styles.avatarText}>{item.firstName.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.name}>{nombreCompleto}</Text>
+                    <View style={styles.rolChip}>
+                      <Text style={styles.rolChipText}>{etiquetaRol(item.role)}</Text>
+                    </View>
+                  </View>
+                </>
+              );
+
+              if (verInhabilitados) {
+                return (
+                  <View style={styles.card}>
+                    {contenido}
+                    <TouchableOpacity
+                      style={styles.habilitarButton}
+                      activeOpacity={0.8}
+                      disabled={habilitandoId === item.id}
+                      onPress={() => confirmarHabilitacion(item)}
+                    >
+                      {habilitandoId === item.id ? (
+                        <ActivityIndicator size="small" color={Colors.primary} />
+                      ) : (
+                        <Text style={styles.habilitarButtonText}>Habilitar</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                );
+              }
 
               return (
                 <TouchableOpacity
@@ -131,15 +231,7 @@ export default function ListadoUsuariosScreen() {
                     params: { id: item.id },
                   })}
                 >
-                  <View style={[styles.avatar, { backgroundColor: colorPorRol(item.role) }]}>
-                    <Text style={styles.avatarText}>{item.firstName.charAt(0).toUpperCase()}</Text>
-                  </View>
-                  <View style={styles.cardInfo}>
-                    <Text style={styles.name}>{nombreCompleto}</Text>
-                    <View style={styles.rolChip}>
-                      <Text style={styles.rolChipText}>{etiquetaRol(item.role)}</Text>
-                    </View>
-                  </View>
+                  {contenido}
                   <MaterialIcons name="chevron-right" size={24} color={Colors.outline} />
                 </TouchableOpacity>
               );
@@ -147,7 +239,11 @@ export default function ListadoUsuariosScreen() {
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <MaterialIcons name="person-off" size={48} color={Colors.surfaceVariant} />
-                <Text style={styles.emptyText}>No se encontraron usuarios</Text>
+                <Text style={styles.emptyText}>
+                  {verInhabilitados
+                    ? 'No hay usuarios inhabilitados'
+                    : 'No se encontraron usuarios'}
+                </Text>
               </View>
             }
           />
@@ -175,6 +271,14 @@ const styles = StyleSheet.create({
     borderRadius: 8, paddingHorizontal: 12, height: 40,
   },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: Colors.neutral },
+  tabs: {
+    flexDirection: 'row', backgroundColor: Colors.surfaceVariant,
+    borderRadius: 8, padding: 3, marginTop: 12, gap: 4,
+  },
+  tab: { flex: 1, paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
+  tabActivo: { backgroundColor: Colors.white },
+  tabText: { fontSize: 13, fontWeight: '600', color: Colors.secondary },
+  tabTextActivo: { color: Colors.primary },
   contador: { marginTop: 8, fontSize: 12, color: Colors.secondary },
   listContent: { padding: 16, gap: 12 },
   centerContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
@@ -200,6 +304,12 @@ const styles = StyleSheet.create({
     borderRadius: 4, alignSelf: 'flex-start',
   },
   rolChipText: { fontSize: 11, fontWeight: '600', color: Colors.primary },
+  habilitarButton: {
+    backgroundColor: `${Colors.primary}15`, paddingHorizontal: 12,
+    paddingVertical: 8, borderRadius: 8, minWidth: 80, alignItems: 'center',
+    justifyContent: 'center',
+  },
+  habilitarButtonText: { fontSize: 12, fontWeight: '700', color: Colors.primary },
   emptyContainer: { paddingTop: 60, alignItems: 'center' },
   emptyText: { marginTop: 12, fontSize: 14, color: Colors.secondary },
 });
