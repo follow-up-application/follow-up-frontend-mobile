@@ -31,13 +31,16 @@ export default function ListadoUsuariosScreen() {
 
   const [estado, setEstado] = useState<EstadoUsuarios>('activos');
   const [busqueda, setBusqueda] = useState('');
-  const [usuarios, setUsuarios] = useState<ApiUser[]>([]);
+  const [activos, setActivos] = useState<ApiUser[]>([]);
+  const [inhabilitados, setInhabilitados] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [habilitandoId, setHabilitandoId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const cargarUsuarios = useCallback(async () => {
-    setLoading(true);
+  const cargarUsuarios = useCallback(async (modo: 'initial' | 'refresh' = 'initial') => {
+    if (modo === 'refresh') setRefreshing(true);
+    else setLoading(true);
     setError('');
 
     try {
@@ -48,11 +51,13 @@ export default function ListadoUsuariosScreen() {
         return;
       }
 
-      const data = estado === 'inhabilitados'
-        ? await getUsuariosInhabilitados()
-        : await getUsuarios();
+      const [activosData, inhabilitadosData] = await Promise.all([
+        getUsuarios(),
+        getUsuariosInhabilitados(),
+      ]);
 
-      setUsuarios(data);
+      setActivos(activosData);
+      setInhabilitados(inhabilitadosData);
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 401) {
         router.replace('/login');
@@ -62,8 +67,9 @@ export default function ListadoUsuariosScreen() {
       setError(mensajeDeError(err, 'No se pudo cargar el listado de usuarios.'));
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [estado, router]);
+  }, [router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -71,23 +77,23 @@ export default function ListadoUsuariosScreen() {
     }, [cargarUsuarios])
   );
 
+  const verInhabilitados = estado === 'inhabilitados';
+  const usuarios = verInhabilitados ? inhabilitados : activos;
   const filtrados = usuarios.filter((usuario) => {
     const texto = `${usuario.firstName} ${usuario.lastName} ${etiquetaRol(usuario.role)}`.toLowerCase();
 
     return texto.includes(busqueda.trim().toLowerCase());
   });
 
-  const verInhabilitados = estado === 'inhabilitados';
-
   const habilitar = async (usuario: ApiUser) => {
     setHabilitandoId(usuario.id);
 
     try {
       await habilitarUsuario(usuario.id);
-
-      Alert.alert('Usuario habilitado', 'El usuario puede volver a iniciar sesión.', [
-        { text: 'OK', onPress: () => cargarUsuarios() },
-      ]);
+      setInhabilitados((prev) => prev.filter((u) => u.id !== usuario.id));
+      setActivos((prev) => (prev.some((u) => u.id === usuario.id) ? prev : [...prev, usuario]));
+      setEstado('activos');
+      Alert.alert('Usuario habilitado', 'El usuario puede volver a iniciar sesión.');
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 401) {
         router.replace('/login');
@@ -175,7 +181,7 @@ export default function ListadoUsuariosScreen() {
           <View style={styles.centerContainer}>
             <MaterialIcons name="error-outline" size={40} color={Colors.error} />
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={cargarUsuarios}>
+            <TouchableOpacity style={styles.retryButton} onPress={() => cargarUsuarios()}>
               <Text style={styles.retryButtonText}>Reintentar</Text>
             </TouchableOpacity>
           </View>
@@ -184,8 +190,8 @@ export default function ListadoUsuariosScreen() {
             data={filtrados}
             keyExtractor={(item) => item.id}
             contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
-            refreshing={loading}
-            onRefresh={cargarUsuarios}
+            refreshing={refreshing}
+            onRefresh={() => cargarUsuarios('refresh')}
             renderItem={({ item }) => {
               const nombreCompleto = `${item.firstName} ${item.lastName}`.trim();
               const contenido = (
