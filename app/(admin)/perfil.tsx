@@ -1,5 +1,8 @@
 import { ProfileMenuItem, ProfileMetric, ProfileView } from '@/components/organisms/ProfileView';
 import { Colors } from '@/constants/Colors';
+import { ApiRequestError } from '@/services/httpClient';
+import { getMe } from '@/services/userService';
+import type { MeUser } from '@/types/auth';
 import { clearSession, getSession, iniciales, nombreCompleto, Session } from '@/utils/session';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -9,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function PerfilAdminScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
+  const [me, setMe] = useState<MeUser | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
   useFocusEffect(
@@ -27,6 +31,14 @@ export default function PerfilAdminScreen() {
 
         setSession(s);
         setLoadingSession(false);
+        getMe()
+          .then((perfil) => { if (activo) setMe(perfil); })
+          .catch(async (err) => {
+            if (err instanceof ApiRequestError && err.status === 401) {
+              await clearSession();
+              if (activo) router.replace('/login');
+            }
+          });
       })();
 
       return () => {
@@ -36,14 +48,10 @@ export default function PerfilAdminScreen() {
   );
 
   const handleLogout = async () => {
-    // TODO: si el backend tiene endpoint de logout (revocar token Sanctum), llamarlo acá:
-    // await fetch(`${API_BASE_URL}/logout`, { method: 'POST', headers: { Authorization: `Bearer ${session?.token}` } });
     await clearSession();
     router.replace('/login');
   };
 
-  // TODO: estas métricas son de ejemplo — reemplazar por datos reales
-  // cuando exista el endpoint correspondiente (ej. GET /api/v1/admin/resumen).
   const metricas: ProfileMetric[] = [
     { id: '1', label: 'Sede', value: '1', icono: 'domain' },
     { id: '2', label: 'Docentes', value: '42', icono: 'supervisor-account' },
@@ -84,15 +92,26 @@ export default function PerfilAdminScreen() {
     );
   }
 
+  const nombre = me ? `${me.firstName} ${me.lastName}`.trim() : nombreCompleto(session);
+  const avatar = me ? `${me.firstName?.[0] ?? ''}${me.lastName?.[0] ?? ''}`.toUpperCase() : iniciales(session);
+  const datos = [
+    { id: 'nombre', label: 'Nombre', value: nombre },
+    { id: 'usuario', label: 'Usuario', value: me?.username ?? session.username },
+    { id: 'rol', label: 'Rol', value: 'Administrador' },
+    ...(me?.dni ? [{ id: 'dni', label: 'DNI', value: String(me.dni) }] : []),
+    ...(me?.email ? [{ id: 'email', label: 'Email', value: me.email }] : []),
+  ];
+
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ProfileView
-          nombre={nombreCompleto(session)}
+          nombre={nombre}
           rol="Administrador de Sistema"
-          avatarInicial={iniciales(session)}
+          avatarInicial={avatar}
           primaryColor="#386A20"
           metricas={metricas}
+          datos={datos}
           menuItems={menuItems}
           onLogout={handleLogout}
           onBackPress={() => router.back()}
