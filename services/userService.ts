@@ -1,5 +1,5 @@
 import { apiRequest, apiRequestVoid } from '@/services/httpClient';
-import type { ApiUser, UpdateUserRequest } from '@/types/auth';
+import type { ApiUser, MeUser, UpdateUserRequest } from '@/types/auth';
 
 /** GET /users — solo administrador. */
 export function getUsuarios(): Promise<ApiUser[]> {
@@ -32,4 +32,9 @@ export function inhabilitarUsuario(id: string): Promise<void> {
 /** PATCH /users/{id}/habilitar — solo administrador. Restaura el usuario (204). */
 export function habilitarUsuario(id: string): Promise<void> {
     return apiRequestVoid(`/users/${encodeURIComponent(id)}/habilitar`, { method: 'PATCH' });
+}
+
+/** GET /users/me — usuario autenticado (todos los roles). */
+export function getMe(): Promise<MeUser> {
+    return apiRequest<MeUser>('/users/me');
 }
