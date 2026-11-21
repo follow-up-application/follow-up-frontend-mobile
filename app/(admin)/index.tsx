@@ -80,6 +80,7 @@ export default function AdminDashboard() {
         { id: '6', icon: 'school', label: 'Listado de Docentes', onPress: () => router.push('/(admin)/listado-docentes' as any) },
         { id: '8', icon: 'menu-book', label: 'Cargar Materia', onPress: () => router.push('/(admin)/cargar-materia' as any) },
         { id: '9', icon: 'library-books', label: 'Listado de Materias', onPress: () => router.push('/(admin)/listado-materias' as any) },
+        { id: '10', icon: 'manage-accounts', label: 'Listado de Usuarios', onPress: () => router.push('/(admin)/listado-usuarios' as any) },
         { id: '3', icon: 'domain', label: 'Cargar Curso / División', onPress: () => router.push('/(admin)/cargar-curso' as any) },
         { id: '7', icon: 'fact-check', label: 'Verificar API', onPress: () => router.push('/(admin)/verificar-api' as any) },
     ];
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
         { icon: 'school', label: 'Listado de Docentes', onPress: () => router.push('/(admin)/listado-docentes' as any) },
         { icon: 'menu-book', label: 'Cargar Materia', onPress: () => router.push('/(admin)/cargar-materia' as any) },
         { icon: 'library-books', label: 'Listado de Materias', onPress: () => router.push('/(admin)/listado-materias' as any) },
+        { icon: 'manage-accounts', label: 'Listado de Usuarios', onPress: () => router.push('/(admin)/listado-usuarios' as any) },
         { icon: 'domain', label: 'Cargar Curso / División', onPress: () => router.push('/(admin)/cargar-curso' as any) },
         { icon: 'fact-check', label: 'Verificar API', onPress: () => router.push('/(admin)/verificar-api' as any) },
         { icon: 'settings', label: 'Configuración del Sistema' },
