@@ -1,8 +1,9 @@
 import { Colors } from '@/constants/Colors';
 import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
 import { getUsuarios } from '@/services/userService';
-import type { ApiUser, UserRole } from '@/types/auth';
+import type { ApiUser } from '@/types/auth';
 import { getSession } from '@/utils/session';
+import { colorPorRol, etiquetaRol } from '@/utils/usuarios';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -16,28 +17,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const COLORES_POR_ROL: Record<UserRole, string> = {
-  administrador: Colors.primary,
-  docente: '#386A20',
-  alumno: '#E65100',
-  tutor: '#625B71',
-};
-
-const ETIQUETAS_POR_ROL: Record<UserRole, string> = {
-  administrador: 'Administrador',
-  docente: 'Docente',
-  alumno: 'Alumno',
-  tutor: 'Tutor',
-};
-
-function colorPorRol(rol: UserRole): string {
-  return COLORES_POR_ROL[rol] ?? Colors.secondary;
-}
-
-function etiquetaRol(rol: UserRole): string {
-  return ETIQUETAS_POR_ROL[rol] ?? rol;
-}
 
 export default function ListadoUsuariosScreen() {
   const router = useRouter();
@@ -144,7 +123,14 @@ export default function ListadoUsuariosScreen() {
               const nombreCompleto = `${item.firstName} ${item.lastName}`.trim();
 
               return (
-                <View style={styles.card}>
+                <TouchableOpacity
+                  style={styles.card}
+                  activeOpacity={0.7}
+                  onPress={() => router.push({
+                    pathname: '/(admin)/usuario/[id]' as any,
+                    params: { id: item.id },
+                  })}
+                >
                   <View style={[styles.avatar, { backgroundColor: colorPorRol(item.role) }]}>
                     <Text style={styles.avatarText}>{item.firstName.charAt(0).toUpperCase()}</Text>
                   </View>
@@ -154,7 +140,8 @@ export default function ListadoUsuariosScreen() {
                       <Text style={styles.rolChipText}>{etiquetaRol(item.role)}</Text>
                     </View>
                   </View>
-                </View>
+                  <MaterialIcons name="chevron-right" size={24} color={Colors.outline} />
+                </TouchableOpacity>
               );
             }}
             ListEmptyComponent={
