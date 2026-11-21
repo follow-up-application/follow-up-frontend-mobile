@@ -32,6 +32,7 @@ export type CreateAdminRequest = {
     password: string;
 };
 
+/** GET /users (solo administrador): campos camelCase del UserResource. */
 export type ApiUser = {
     id: string;
     firstName: string;
