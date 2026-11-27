@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '@/config/api';
 
@@ -81,7 +81,7 @@ export default function ListadoAlumnosScreen() {
 
       const data: AlumnoApi[] = await response.json();
       setAlumnos(data);
-    } catch (err) {
+    } catch {
       setError('No se pudo conectar con el servidor.');
     } finally {
       setLoading(false);
@@ -153,7 +153,7 @@ export default function ListadoAlumnosScreen() {
         setAlumnos(alumnosPrevios);
         Alert.alert('Error', 'No se pudo eliminar el alumno. Intenta nuevamente.');
       }
-    } catch (err) {
+    } catch {
       setAlumnos(alumnosPrevios);
       Alert.alert('Error', 'No se pudo conectar con el servidor.');
     }
