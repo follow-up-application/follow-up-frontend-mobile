@@ -44,7 +44,7 @@ export function getTutor(id: string): Promise<Tutor> {
     return apiRequest<Tutor>(`/tutores/${id}`);
 }
 
-/** PUT /tutores/{id} — el controller no implementa update, responde 500. */
+/** PUT /tutores/{id} — actualización de un tutor. Solo administrador. */
 export function updateTutor(id: string, request: UpdateTutorRequest): Promise<Tutor> {
     return apiRequest<Tutor>(`/tutores/${id}`, { method: 'PUT', body: request });
 }

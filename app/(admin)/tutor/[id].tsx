@@ -24,6 +24,7 @@ export default function TutorDetalleScreen() {
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
 
   const [tutor, setTutor] = useState<Tutor | null>(null);
+  const [puedeEditar, setPuedeEditar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -45,6 +46,7 @@ export default function TutorDetalleScreen() {
         return;
       }
 
+      setPuedeEditar(session.rol === 'administrador');
       setTutor(await getTutor(id));
     } catch (err) {
       if (err instanceof ApiRequestError) {
@@ -90,7 +92,19 @@ export default function TutorDetalleScreen() {
             <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Detalle de Tutor</Text>
-          <View style={{ width: 24 }} />
+          {puedeEditar && id ? (
+            <TouchableOpacity
+              onPress={() => router.push({
+                pathname: '/(admin)/tutor/[id]/editar' as any,
+                params: { id },
+              })}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <MaterialIcons name="edit" size={22} color={Colors.primary} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 24 }} />
+          )}
         </View>
 
         {loading ? (
