@@ -6,6 +6,8 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const PRIMARY = '#6750A4';
+
 const mockNotifications = [
   {
     id: '1',
@@ -55,7 +57,7 @@ export default function NotificacionesAlumnoScreen() {
 
       {/* Bottom Bar specific to Alumno */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
-        <TouchableOpacity style={styles.bottomBarItem} onPress={() => router.replace('/(alumno)')} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.bottomBarItem} onPress={() => router.replace('/(alumno)/index')} activeOpacity={0.7}>
           <MaterialIcons name="space-dashboard" size={24} color={Colors.outline} />
           <Text style={styles.bottomBarText}>Inicio</Text>
         </TouchableOpacity>

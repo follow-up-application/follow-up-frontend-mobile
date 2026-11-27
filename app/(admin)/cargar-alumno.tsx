@@ -5,10 +5,10 @@ import SelectInput, { SelectOption } from '@/components/atoms/SelectInput';
 import { FormField } from '@/components/molecules/FormField';
 import { Colors } from '@/constants/Colors';
 import {
+  buscarTutorPorDni,
   crearAlumno,
+  getCursosDivisionTurno,
 } from '@/services/alumnoService';
-import { getCursosDivisionTurno } from '@/services/cursoDivisionTurnoService';
-import { buscarTutorPorDni } from '@/services/tutorService';
 import { CreateAlumnoRequest, TutorAlumnoRelation } from '@/types/alumno';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -26,7 +26,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// El enum del dominio es en minúscula: en mayúsculas el POST /alumnos devuelve 422.
 const OPCIONES_PARENTESCO: SelectOption[] = [
   { label: 'Padre', value: 'padre' },
   { label: 'Madre', value: 'madre' },
@@ -119,7 +118,7 @@ export default function CargarAlumnoScreen() {
             value: c.id,
           }))
         );
-      } catch {
+      } catch (error) {
         setErrorCursos('No se pudieron cargar los cursos');
       } finally {
         setLoadingCursos(false);
@@ -160,7 +159,7 @@ export default function CargarAlumnoScreen() {
       }
 
       setTutorBuscado(true);
-    } catch {
+    } catch (error) {
       setErrorTutor('Error al buscar el tutor. Intenta nuevamente.');
       limpiarDatosTutor();
     } finally {

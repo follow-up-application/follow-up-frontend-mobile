@@ -25,12 +25,6 @@ export interface ProfileMenuItem {
   onPress: () => void;
 }
 
-export interface ProfileDato {
-  id: string;
-  label: string;
-  value: string;
-}
-
 interface ProfileViewProps {
   nombre: string;
   rol: string;
@@ -38,7 +32,6 @@ interface ProfileViewProps {
   avatarInicial: string;
   primaryColor?: string;
   metricas?: ProfileMetric[];
-  datos?: ProfileDato[];
   menuItems: ProfileMenuItem[];
   onLogout?: () => void;
   onBackPress?: () => void;
@@ -51,7 +44,6 @@ export function ProfileView({
   avatarInicial,
   primaryColor = '#6750A4',
   metricas = [],
-  datos = [],
   menuItems,
   onLogout,
   onBackPress,
@@ -94,20 +86,6 @@ export function ProfileView({
               <View key={metric.id} style={styles.metricCard}>
                 <Text style={styles.metricValue}>{metric.value}</Text>
                 <Text style={styles.metricLabel}>{metric.label}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {datos.length > 0 && (
-          <View style={styles.datosContainer}>
-            {datos.map((dato, index) => (
-              <View
-                key={dato.id}
-                style={[styles.datoRow, index === datos.length - 1 && { borderBottomWidth: 0 }]}
-              >
-                <Text style={styles.datoLabel}>{dato.label}</Text>
-                <Text style={styles.datoValue} numberOfLines={1}>{dato.value}</Text>
               </View>
             ))}
           </View>
@@ -252,25 +230,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.secondary,
   },
-  datosContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-  },
-  datoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-    gap: 12,
-  },
-  datoLabel: { fontSize: 13, fontWeight: '600', color: Colors.secondary },
-  datoValue: { flex: 1, fontSize: 13, fontWeight: '700', color: Colors.neutral, textAlign: 'right' },
   menuContainer: {
     backgroundColor: Colors.white,
     borderRadius: 18,
