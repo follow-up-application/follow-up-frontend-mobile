@@ -39,11 +39,3 @@ export type ApiUser = {
     lastName: string;
     role: UserRole;
 };
-
-/** PUT /users/{id} (solo administrador). El backend ignora campos vacíos. */
-export type UpdateUserRequest = {
-    first_name?: string;
-    last_name?: string;
-    dni?: number;
-    username?: string;
-};

@@ -1,4 +1,3 @@
-import { PrimaryButton } from '@/components/atoms/PrimaryButton';
 import { Colors } from '@/constants/Colors';
 import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
 import { getUsuario } from '@/services/userService';
@@ -88,19 +87,7 @@ export default function UsuarioDetalleScreen() {
             <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Detalle de Usuario</Text>
-          {id ? (
-            <TouchableOpacity
-              onPress={() => router.push({
-                pathname: '/(admin)/usuario/[id]/editar' as any,
-                params: { id },
-              })}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <MaterialIcons name="edit" size={22} color={Colors.primary} />
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 24 }} />
-          )}
+          <View style={{ width: 24 }} />
         </View>
 
         {loading ? (
@@ -155,16 +142,6 @@ export default function UsuarioDetalleScreen() {
                 </Text>
               </View>
             </View>
-
-            {id ? (
-              <PrimaryButton
-                title="Editar usuario"
-                onPress={() => router.push({
-                  pathname: '/(admin)/usuario/[id]/editar' as any,
-                  params: { id },
-                })}
-              />
-            ) : null}
           </ScrollView>
         ) : null}
       </SafeAreaView>
