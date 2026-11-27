@@ -136,7 +136,14 @@ export default function ListadoTutoresScreen() {
             refreshing={refreshing}
             onRefresh={() => cargar('refresh')}
             renderItem={({ item, index }) => (
-              <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.7}
+                onPress={() => router.push({
+                  pathname: '/(admin)/tutor/[id]' as any,
+                  params: { id: item.id },
+                })}
+              >
                 <View style={[styles.avatar, { backgroundColor: colorPorIndice(index) }]}>
                   <Text style={styles.avatarText}>
                     {item.first_name.charAt(0).toUpperCase()}
@@ -162,7 +169,8 @@ export default function ListadoTutoresScreen() {
                     <Text style={styles.dato}>{item.telephone}</Text>
                   </View>
                 </View>
-              </View>
+                <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
+              </TouchableOpacity>
             )}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
