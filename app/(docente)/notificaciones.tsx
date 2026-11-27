@@ -6,6 +6,8 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const PRIMARY = '#4A6FA5';
+
 const mockNotifications: NotificationItem[] = [
   {
     id: '1',

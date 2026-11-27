@@ -188,7 +188,7 @@ export default function CompletarRegistroTutorScreen() {
 
       const ruta = RUTA_POR_ROL[loginData.rol] ?? '/login';
       router.replace(ruta as any);
-    } catch {
+    } catch (error) {
       setErrorGeneral('No se pudo conectar con el servidor. Verifica tu conexión.');
     } finally {
       setLoading(false);

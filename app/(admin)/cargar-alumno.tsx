@@ -119,7 +119,7 @@ export default function CargarAlumnoScreen() {
             value: c.id,
           }))
         );
-      } catch {
+      } catch (error) {
         setErrorCursos('No se pudieron cargar los cursos');
       } finally {
         setLoadingCursos(false);
@@ -160,7 +160,7 @@ export default function CargarAlumnoScreen() {
       }
 
       setTutorBuscado(true);
-    } catch {
+    } catch (error) {
       setErrorTutor('Error al buscar el tutor. Intenta nuevamente.');
       limpiarDatosTutor();
     } finally {
