@@ -34,7 +34,7 @@ export function getTutores(): Promise<Tutor[]> {
     return apiRequest<Tutor[]>('/tutores');
 }
 
-/** POST /tutores — alta directa del administrador, sin código institucional. */
+/** POST /tutores — el controller no implementa store, responde 500. */
 export function crearTutor(request: CreateTutorRequest): Promise<Tutor> {
     return apiRequest<Tutor>('/tutores', { method: 'POST', body: request });
 }
