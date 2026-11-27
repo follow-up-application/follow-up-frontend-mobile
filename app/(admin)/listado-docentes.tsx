@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/Colors';
-import { getDocentes } from '@/services/docenteService';
+import { getDocentes, inhabilitarDocente } from '@/services/docenteService';
+import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
 import { docenteUsername } from '@/types/docente';
 import type { Docente } from '@/types/docente';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -36,6 +37,7 @@ export default function ListadoDocentesScreen() {
   const [docentes, setDocentes] = useState<Docente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [inhabilitandoId, setInhabilitandoId] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -75,28 +77,58 @@ export default function ListadoDocentesScreen() {
     });
   }, [busqueda, docentes]);
 
-  const confirmarEliminacion = (docente: Docente) => {
+  const inhabilitar = async (docente: Docente) => {
+    setInhabilitandoId(docente.id);
+
+    try {
+      await inhabilitarDocente(docente.id);
+      setDocentes((prev) => prev.filter((item) => item.id !== docente.id));
+      Alert.alert(
+        'Docente inhabilitado',
+        `${nombreCompleto(docente)} ya no podrá iniciar sesión.`,
+        [{ text: 'OK' }]
+      );
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        if (err.status === 401) {
+          router.replace('/login');
+          return;
+        }
+        if (err.status === 403) {
+          Alert.alert('Error', 'No tenés permisos para inhabilitar docentes.');
+          return;
+        }
+      }
+
+      Alert.alert('Error', mensajeDeError(err, 'No se pudo inhabilitar el docente.'));
+    } finally {
+      setInhabilitandoId(null);
+    }
+  };
+
+  const confirmarInhabilitacion = (docente: Docente) => {
     Alert.alert(
-      'Eliminar Docente',
-      `¿Estás seguro de que deseas eliminar a ${nombreCompleto(docente)}?`,
+      'Inhabilitar docente',
+      `¿Estás seguro de que deseas inhabilitar a ${nombreCompleto(docente)}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sí, Eliminar',
-          onPress: () => setDocentes((prev) => prev.filter((item) => item.id !== docente.id)),
-          style: 'destructive',
-        },
+        { text: 'Inhabilitar', style: 'destructive', onPress: () => inhabilitar(docente) },
       ]
     );
   };
 
   const renderRightActions = (docente: Docente) => (
     <TouchableOpacity
-      style={styles.deleteAction}
-      onPress={() => confirmarEliminacion(docente)}
+      style={styles.inhabilitarAction}
+      disabled={inhabilitandoId === docente.id}
+      onPress={() => confirmarInhabilitacion(docente)}
     >
-      <MaterialIcons name="delete-outline" size={28} color={Colors.white} />
-      <Text style={styles.deleteActionText}>Eliminar</Text>
+      {inhabilitandoId === docente.id ? (
+        <ActivityIndicator size="small" color={Colors.white} />
+      ) : (
+        <MaterialIcons name="block" size={28} color={Colors.white} />
+      )}
+      <Text style={styles.inhabilitarActionText}>Inhabilitar</Text>
     </TouchableOpacity>
   );
 
@@ -259,9 +291,9 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3,
     shadowRadius: 4, elevation: 6,
   },
-  deleteAction: {
+  inhabilitarAction: {
     backgroundColor: Colors.error, justifyContent: 'center', alignItems: 'center',
     width: 80, borderRadius: 12, marginLeft: 12,
   },
-  deleteActionText: { color: Colors.white, fontSize: 11, fontWeight: '600', marginTop: 4 },
+  inhabilitarActionText: { color: Colors.white, fontSize: 11, fontWeight: '600', marginTop: 4 },
 });
