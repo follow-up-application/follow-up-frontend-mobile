@@ -1,3 +1,4 @@
+import { PrimaryButton } from '@/components/atoms/PrimaryButton';
 import { Colors } from '@/constants/Colors';
 import { getDocente } from '@/services/docenteService';
 import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
@@ -158,6 +159,14 @@ export default function DocenteDetalleScreen() {
                 </Text>
               </View>
             </View>
+
+            <PrimaryButton
+              title="Ver materias asignadas"
+              onPress={() => router.push({
+                pathname: '/(admin)/docente/[id]/materias' as any,
+                params: { id: docente.id },
+              })}
+            />
           </ScrollView>
         ) : null}
       </SafeAreaView>
