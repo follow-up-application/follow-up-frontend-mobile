@@ -1,6 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
-import { getTutor } from '@/services/tutorService';
+import { getTutor, inhabilitarTutor } from '@/services/tutorService';
 import type { Tutor } from '@/types/tutor';
 import { getSession } from '@/utils/session';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,6 +26,7 @@ export default function TutorDetalleScreen() {
 
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [puedeEditar, setPuedeEditar] = useState(false);
+  const [inhabilitando, setInhabilitando] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -75,6 +77,40 @@ export default function TutorDetalleScreen() {
       cargarTutor();
     }, [cargarTutor])
   );
+
+  const inhabilitar = async () => {
+    if (!id) return;
+
+    setInhabilitando(true);
+
+    try {
+      await inhabilitarTutor(id);
+
+      Alert.alert('Tutor inhabilitado', 'El tutor no podrá iniciar sesión.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (err) {
+      if (err instanceof ApiRequestError && err.status === 401) {
+        router.replace('/login');
+        return;
+      }
+
+      Alert.alert('Error', mensajeDeError(err, 'No se pudo inhabilitar el tutor.'));
+    } finally {
+      setInhabilitando(false);
+    }
+  };
+
+  const confirmarInhabilitacion = () => {
+    Alert.alert(
+      'Inhabilitar tutor',
+      `¿Estás seguro de que deseas inhabilitar a ${nombre}? Esta acción no se puede deshacer desde la app.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Inhabilitar', style: 'destructive', onPress: inhabilitar },
+      ]
+    );
+  };
 
   const nombre = tutor ? `${tutor.first_name} ${tutor.last_name}`.trim() : '';
   const iniciales = tutor
@@ -163,6 +199,24 @@ export default function TutorDetalleScreen() {
                 </Text>
               </View>
             </View>
+
+            {puedeEditar ? (
+              <TouchableOpacity
+                style={styles.destructiveButton}
+                activeOpacity={0.8}
+                disabled={inhabilitando}
+                onPress={confirmarInhabilitacion}
+              >
+                {inhabilitando ? (
+                  <ActivityIndicator color={Colors.error} />
+                ) : (
+                  <>
+                    <MaterialIcons name="block" size={20} color={Colors.error} />
+                    <Text style={styles.destructiveButtonText}>Inhabilitar tutor</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : null}
           </ScrollView>
         ) : null}
       </SafeAreaView>
@@ -211,4 +265,10 @@ const styles = StyleSheet.create({
   filaLabel: { fontSize: 13, color: Colors.secondary, marginRight: 16 },
   filaValue: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.neutral, textAlign: 'right' },
   idValue: { fontSize: 11, color: Colors.secondary },
+  destructiveButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginTop: 16, paddingVertical: 14, borderRadius: 24,
+    borderWidth: 1, borderColor: Colors.error, backgroundColor: `${Colors.error}10`,
+  },
+  destructiveButtonText: { fontSize: 15, fontWeight: '600', color: Colors.error },
 });

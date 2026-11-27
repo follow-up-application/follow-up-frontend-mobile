@@ -49,6 +49,11 @@ export function updateTutor(id: string, request: UpdateTutorRequest): Promise<Tu
     return apiRequest<Tutor>(`/tutores/${id}`, { method: 'PUT', body: request });
 }
 
+/** PATCH /tutores/{id}/inhabilitar — baja lógica. Solo administrador. */
+export function inhabilitarTutor(id: string): Promise<void> {
+    return apiRequestVoid(`/tutores/${id}/inhabilitar`, { method: 'PATCH' });
+}
+
 /** DELETE /tutores/{id} — responde 204. */
 export function deleteTutor(id: string): Promise<void> {
     return apiRequestVoid(`/tutores/${id}`, { method: 'DELETE' });
