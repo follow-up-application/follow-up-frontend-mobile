@@ -34,7 +34,7 @@ export function getTutores(): Promise<Tutor[]> {
     return apiRequest<Tutor[]>('/tutores');
 }
 
-/** POST /tutores — el controller no implementa store, responde 500. */
+/** POST /tutores — alta directa del administrador, sin código institucional. */
 export function crearTutor(request: CreateTutorRequest): Promise<Tutor> {
     return apiRequest<Tutor>('/tutores', { method: 'POST', body: request });
 }
@@ -44,9 +44,14 @@ export function getTutor(id: string): Promise<Tutor> {
     return apiRequest<Tutor>(`/tutores/${id}`);
 }
 
-/** PUT /tutores/{id} — el controller no implementa update, responde 500. */
+/** PUT /tutores/{id} — actualización de un tutor. Solo administrador. */
 export function updateTutor(id: string, request: UpdateTutorRequest): Promise<Tutor> {
     return apiRequest<Tutor>(`/tutores/${id}`, { method: 'PUT', body: request });
+}
+
+/** PATCH /tutores/{id}/inhabilitar — baja lógica. Solo administrador. */
+export function inhabilitarTutor(id: string): Promise<void> {
+    return apiRequestVoid(`/tutores/${id}/inhabilitar`, { method: 'PATCH' });
 }
 
 /** DELETE /tutores/{id} — responde 204. */
@@ -67,7 +72,7 @@ export async function buscarTutorPorDni(dni: string): Promise<Tutor | null> {
     }
 }
 
-/** GET /tutores/{id}/alumnos — el controller no implementa alumnos, responde 500. */
+/** GET /tutores/{id}/alumnos — alumnos a cargo del tutor. Administrador y tutor. */
 export function getAlumnosByTutor(id: string): Promise<Alumno[]> {
     return apiRequest<Alumno[]>(`/tutores/${id}/alumnos`);
 }

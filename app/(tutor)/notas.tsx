@@ -12,14 +12,14 @@ const hijos = [
   { id: '2', nombre: 'Lucía García', icono: 'face-3' as const },
 ];
 
-const calificacionesPorHijo: Record<HijoId, Array<{
+const calificacionesPorHijo: Record<HijoId, {
   id: string;
   materia: string;
   profesor: string;
   nota1: string;
   nota2: string;
   notaFinal: number;
-}>> = {
+}[]> = {
   '1': [
     { id: '1', materia: 'Matemáticas Avanzadas', profesor: 'Prof. Roberto Domínguez', nota1: '8.5', nota2: '7.0', notaFinal: 7.8 },
     { id: '2', materia: 'Historia Universal', profesor: 'Prof. Elena Martinez', nota1: '9.0', nota2: '8.5', notaFinal: 8.8 },

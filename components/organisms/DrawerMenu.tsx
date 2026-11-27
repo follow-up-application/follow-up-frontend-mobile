@@ -1,6 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -50,8 +50,8 @@ export default function DrawerMenu({
   activeLabel,
   onLogout,
 }: DrawerMenuProps) {
-  const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const [translateX] = useState(() => new Animated.Value(-DRAWER_WIDTH));
+  const [overlayOpacity] = useState(() => new Animated.Value(0));
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -160,7 +160,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   overlayPressable: {

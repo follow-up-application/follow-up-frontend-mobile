@@ -18,7 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PALETA = ['#6750A4', '#B3261E', '#386A20', '#625B71', '#E65100'];
