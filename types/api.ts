@@ -1,12 +1,8 @@
-export type ApiError = {
-    status: number;
+export interface ApiError {
     message: string;
-    errors?: Record<string, string[]>;
-};
+}
 
-export type ValidationErrors = Record<string, string[]>;
-
-export interface ApiErrorResponse {
-    message?: string;
-    errors?: ValidationErrors;
+export interface ValidationError {
+    message: string;
+    errors: Record<string, string[]>;
 }
