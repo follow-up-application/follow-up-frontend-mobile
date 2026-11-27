@@ -154,8 +154,8 @@ export default function ListadoDocentesScreen() {
                   style={styles.card}
                   activeOpacity={1}
                   onPress={() => router.push({
-                    pathname: '/(admin)/cargar-docente',
-                    params: { edit: 'true', id: item.id },
+                    pathname: '/(admin)/docente/[id]' as any,
+                    params: { id: item.id },
                   })}
                 >
                   <View style={[styles.avatar, { backgroundColor: colorPorIndice(index) }]}>
