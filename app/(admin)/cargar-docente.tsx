@@ -1,5 +1,6 @@
 import { PrimaryButton } from '@/components/atoms/PrimaryButton';
 import { OutlinedButton } from '@/components/atoms/OutlinedButton';
+import { DateInput } from '@/components/atoms/DateInput';
 import { Input } from '@/components/atoms/Input';
 import { FormField } from '@/components/molecules/FormField';
 import SelectInput, { SelectOption } from '@/components/atoms/SelectInput';
@@ -230,14 +231,7 @@ export default function CargarDocenteScreen() {
             </View>
 
             <FormField label="Fecha de ingreso">
-              <Input
-                iconName="calendar-today"
-                placeholder="DD/MM/AAAA"
-                value={fechaIngreso}
-                onChangeText={setFechaIngreso}
-                keyboardType="numeric"
-                maxLength={10}
-              />
+              <DateInput value={fechaIngreso} onChange={setFechaIngreso} />
             </FormField>
 
             <SelectInput

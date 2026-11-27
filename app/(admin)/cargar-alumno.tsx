@@ -1,3 +1,4 @@
+import { DateInput } from '@/components/atoms/DateInput';
 import { Input } from '@/components/atoms/Input';
 import { OutlinedButton } from '@/components/atoms/OutlinedButton';
 import { PrimaryButton } from '@/components/atoms/PrimaryButton';
@@ -316,13 +317,11 @@ export default function CargarAlumnoScreen() {
           </FormField>
 
           <FormField label="Fecha de nacimiento" errorMessage={errores.fechaNacimiento}>
-            <Input
-              iconName="calendar-today"
-              placeholder="DD/MM/AAAA"
+            <DateInput
               value={fechaNacimiento}
-              onChangeText={setFechaNacimiento}
-              keyboardType="numbers-and-punctuation"
-              editable={!saving}
+              onChange={setFechaNacimiento}
+              disabled={saving}
+              maximumDate={new Date()}
             />
           </FormField>
 
