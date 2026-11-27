@@ -22,9 +22,9 @@ export function updateDocente(id: string, request: UpdateDocenteRequest): Promis
     return apiRequest<Docente>(`/docentes/${id}`, { method: 'PUT', body: request });
 }
 
-/** DELETE /docentes/{id} — responde 204. */
-export function deleteDocente(id: string): Promise<void> {
-    return apiRequestVoid(`/docentes/${id}`, { method: 'DELETE' });
+/** PATCH /docentes/{id}/inhabilitar — solo administrador. Baja lógica (204). */
+export function inhabilitarDocente(id: string): Promise<void> {
+    return apiRequestVoid(`/docentes/${encodeURIComponent(id)}/inhabilitar`, { method: 'PATCH' });
 }
 
 /** GET /docentes/{id}/materias — administrador y docente. */

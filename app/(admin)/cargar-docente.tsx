@@ -1,13 +1,20 @@
 import { PrimaryButton } from '@/components/atoms/PrimaryButton';
 import { OutlinedButton } from '@/components/atoms/OutlinedButton';
+import { DateInput } from '@/components/atoms/DateInput';
 import { Input } from '@/components/atoms/Input';
 import { FormField } from '@/components/molecules/FormField';
-import SelectInput from '@/components/atoms/SelectInput';
+import SelectInput, { SelectOption } from '@/components/atoms/SelectInput';
 import { Colors } from '@/constants/Colors';
+import { getCursosDivisionTurno } from '@/services/cursoDivisionTurnoService';
+import { crearDocente } from '@/services/docenteService';
+import type { CreateDocenteRequest } from '@/types/docente';
+import { esNombreValido, esDniValido, esTelefonoValido, esFormatoFechaValido } from '@/utils/validations';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
-import { esNombreValido, esDniValido, esEmailValido, esTelefonoValido } from '@/utils/validations'; import {
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -18,94 +25,128 @@ import { esNombreValido, esDniValido, esEmailValido, esTelefonoValido } from '@/
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ValidationCard from '@/components/molecules/ValidationCard';
-const MATERIAS = [
-  { label: 'Matemáticas', value: 'Matemáticas' },
-  { label: 'Prácticas del Lenguaje', value: 'Prácticas del Lenguaje' },
-  { label: 'Ciencias Naturales', value: 'Ciencias Naturales' },
-  { label: 'Ciencias Sociales', value: 'Ciencias Sociales' },
-  { label: 'Educación Física', value: 'Educación Física' },
-  { label: 'Inglés', value: 'Inglés' },
-  { label: 'Arte', value: 'Arte' },
-];
 
-const GRADOS = [
-  { label: '1', value: '1' },
-  { label: '2', value: '2' },
-  { label: '3', value: '3' },
-  { label: '4', value: '4' },
-  { label: '5', value: '5' },
-  { label: '6', value: '6' },
-  { label: '7', value: '7' },
-  { label: '8', value: '8' },
-  { label: '9', value: '9' },
-];
+function fechaHoy(): string {
+  const hoy = new Date();
+  const dia = String(hoy.getDate()).padStart(2, '0');
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+  return `${dia}/${mes}/${hoy.getFullYear()}`;
+}
 
-const DIVISIONES = [
-  { label: '1', value: '1' },
-  { label: '2', value: '2' },
-  { label: '3', value: '3' },
-  { label: '4', value: '4' },
-  { label: '5', value: '5' },
-  { label: 'A', value: 'A' },
-  { label: 'B', value: 'B' },
-  { label: 'C', value: 'C' },
-  { label: 'D', value: 'D' },
-  { label: 'E', value: 'E' },
-];
-
-const TURNOS = [
-  { label: 'Mañana', value: 'Mañana' },
-  { label: 'Tarde', value: 'Tarde' },
-];
 export default function CargarDocenteScreen() {
   const router = useRouter();
-  // Extraemos la señal para saber si estamos editando
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === 'true';
-  // Datos Personales
+
   const [apellido, setApellido] = useState('');
   const [nombre, setNombre] = useState('');
   const [dni, setDni] = useState('');
-
-  // Contacto y Asignaciones
-  const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [materia, setMateria] = useState(''); // Ahora es un texto simple
-  const [grado, setGrado] = useState('');
-  const [division, setDivision] = useState('');
-  const [turno, setTurno] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [fechaIngreso, setFechaIngreso] = useState(fechaHoy());
 
-  // Lógica de validación dinámica
-  // Lógica de validación dinámica detallada
+  const [cursoDivisionTurnoId, setCursoDivisionTurnoId] = useState<number | null>(null);
+  const [cursoOptions, setCursoOptions] = useState<SelectOption[]>([]);
+  const [loadingCursos, setLoadingCursos] = useState(true);
+  const [errorCursos, setErrorCursos] = useState('');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorGeneral, setErrorGeneral] = useState('');
+
+  useEffect(() => {
+    let vigente = true;
+
+    (async () => {
+      try {
+        const cursos = await getCursosDivisionTurno();
+
+        if (!vigente) return;
+
+        setCursoOptions(
+          cursos.map((curso) => ({
+            label: `${curso.curso}° ${curso.division} - ${curso.turno}`,
+            value: curso.id,
+          }))
+        );
+      } catch {
+        if (vigente) {
+          setErrorCursos('No se pudieron cargar los cursos.');
+        }
+      } finally {
+        if (vigente) {
+          setLoadingCursos(false);
+        }
+      }
+    })();
+
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
   const obtenerErrores = () => {
     const errs: string[] = [];
 
-    // 1. Revisamos campos vacíos
-    if (!apellido || !nombre || !dni || !email || !telefono || !materia || !grado || !division || !turno) {
+    if (!apellido || !nombre || !dni || !telefono || !fechaIngreso || cursoDivisionTurnoId === null) {
       errs.push('Faltan completar campos obligatorios');
     }
 
-    // 2. Revisamos formatos incorrectos (solo si están escritos)
     if (apellido && !esNombreValido(apellido)) errs.push('El apellido solo puede contener letras');
     if (nombre && !esNombreValido(nombre)) errs.push('El nombre solo puede contener letras');
     if (dni && !esDniValido(dni)) errs.push('El DNI debe tener entre 7 y 8 números');
-    if (email && !esEmailValido(email)) errs.push('El correo no tiene un formato válido');
     if (telefono && !esTelefonoValido(telefono)) errs.push('El teléfono tiene un formato inválido');
+    if (fechaIngreso && !esFormatoFechaValido(fechaIngreso)) {
+      errs.push('La fecha de ingreso debe tener formato DD/MM/AAAA');
+    }
+    if (errorCursos) errs.push(errorCursos);
 
     return errs;
   };
 
   const erroresFormulario = obtenerErrores();
 
-  const handleGuardar = () => {
-    if (erroresFormulario.length > 0) return;
+  const handleGuardar = async () => {
+    if (erroresFormulario.length > 0 || isLoading) {
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+    setErrorGeneral('');
+
+    const request: CreateDocenteRequest = {
+      first_name: nombre.trim(),
+      last_name: apellido.trim(),
+      dni: Number(dni.trim()),
+      telephone: telefono.trim(),
+      fecha_ingreso: fechaIngreso.trim(),
+      curso_division_turno_id: cursoDivisionTurnoId as number,
+    };
+
+    try {
+      await crearDocente(request);
+
+      Alert.alert('Docente cargado', 'El docente se registró correctamente.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      const mensaje = error instanceof Error ? error.message : 'No se pudo guardar el docente.';
+
+      setErrorGeneral(mensaje);
+      Alert.alert('Error', mensaje);
+    } finally {
       setIsLoading(false);
-      router.back();
-    }, 1500);
+    }
   };
+
+  if (loadingCursos) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
@@ -130,7 +171,6 @@ export default function CargarDocenteScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="person-outline" size={16} color={Colors.secondary} />
@@ -173,17 +213,6 @@ export default function CargarDocenteScreen() {
               <Text style={styles.sectionLabel}>CONTACTO</Text>
             </View>
 
-            <FormField label="Email docente">
-              <Input
-                iconName="mail-outline"
-                placeholder="docente@escuela.edu.ar"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </FormField>
-
             <FormField label="Teléfono">
               <Input
                 iconName="phone"
@@ -194,17 +223,34 @@ export default function CargarDocenteScreen() {
               />
             </FormField>
           </View>
+
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="school" size={16} color={Colors.secondary} />
               <Text style={styles.sectionLabel}>ASIGNACIÓN ACADÉMICA</Text>
             </View>
 
-            <SelectInput label="Materia que dicta" iconName="menu-book" placeholder="Seleccionar materia..." value={materia} options={MATERIAS} onChange={(value) => setMateria(String(value))} />
-            <SelectInput label="Grado / Año asignado" iconName="school" placeholder="Seleccionar grado..." value={grado} options={GRADOS} onChange={(value) => setGrado(String(value))} />
-            <SelectInput label="División" iconName="class" placeholder="Seleccionar división..." value={division} options={DIVISIONES} onChange={(value) => setDivision(String(value))} />
-            <SelectInput label="Turno" iconName="schedule" placeholder="Seleccionar turno..." value={turno} options={TURNOS} onChange={(value) => setTurno(String(value))} />
+            <FormField label="Fecha de ingreso">
+              <DateInput value={fechaIngreso} onChange={setFechaIngreso} />
+            </FormField>
+
+            <SelectInput
+              label="Curso / División / Turno"
+              iconName="school"
+              placeholder="Seleccionar curso..."
+              value={cursoDivisionTurnoId}
+              options={cursoOptions}
+              onChange={(value) => setCursoDivisionTurnoId(Number(value))}
+            />
           </View>
+
+          {(errorGeneral || errorCursos).length > 0 && (
+            <View style={styles.errorCard}>
+              <MaterialIcons name="error-outline" size={20} color={Colors.error} />
+              <Text style={styles.errorCardText}>{errorGeneral || errorCursos}</Text>
+            </View>
+          )}
+
           <View style={styles.actions}>
             <ValidationCard errors={erroresFormulario} />
             <PrimaryButton
@@ -232,6 +278,11 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -268,23 +319,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  heroBanner: {
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 28,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.white,
-    marginBottom: 6,
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    color: `${Colors.white}CC`,
-    lineHeight: 18,
-  },
   section: {
     marginBottom: 24,
   },
@@ -299,6 +333,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.secondary,
     letterSpacing: 0.8,
+  },
+  errorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: `${Colors.error}12`,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorCardText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.error,
+    fontWeight: '500',
   },
   actions: {
     gap: 12,
