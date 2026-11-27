@@ -40,17 +40,6 @@ export type ApiUser = {
     role: UserRole;
 };
 
-/** GET /users/me: perfil del usuario autenticado. */
-export type MeUser = {
-    id: string;
-    firstName: string;
-    lastName: string;
-    role: UserRole;
-    username?: string;
-    dni?: number | string | null;
-    email?: string | null;
-};
-
 /** PUT /users/{id} (solo administrador). El backend ignora campos vacíos. */
 export type UpdateUserRequest = {
     first_name?: string;
