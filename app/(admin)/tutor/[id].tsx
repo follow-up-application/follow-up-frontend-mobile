@@ -200,6 +200,26 @@ export default function TutorDetalleScreen() {
               </View>
             </View>
 
+            {id ? (
+              <TouchableOpacity
+                style={styles.quickAction}
+                activeOpacity={0.7}
+                onPress={() => router.push({
+                  pathname: '/(admin)/tutor/[id]/alumnos' as any,
+                  params: { id },
+                })}
+              >
+                <View style={styles.quickActionIcon}>
+                  <MaterialIcons name="groups" size={22} color={Colors.primary} />
+                </View>
+                <View style={styles.quickActionText}>
+                  <Text style={styles.quickActionTitle}>Alumnos a cargo</Text>
+                  <Text style={styles.quickActionSubtitle}>Ver los alumnos asignados a este tutor</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
+              </TouchableOpacity>
+            ) : null}
+
             {puedeEditar ? (
               <TouchableOpacity
                 style={styles.destructiveButton}
@@ -265,6 +285,18 @@ const styles = StyleSheet.create({
   filaLabel: { fontSize: 13, color: Colors.secondary, marginRight: 16 },
   filaValue: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.neutral, textAlign: 'right' },
   idValue: { fontSize: 11, color: Colors.secondary },
+  quickAction: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16,
+    padding: 14, borderRadius: 12, borderWidth: 1,
+    borderColor: Colors.surfaceVariant, backgroundColor: Colors.white,
+  },
+  quickActionIcon: {
+    width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: `${Colors.primary}15`,
+  },
+  quickActionText: { flex: 1 },
+  quickActionTitle: { fontSize: 14, fontWeight: '700', color: Colors.neutral },
+  quickActionSubtitle: { fontSize: 12, color: Colors.secondary, marginTop: 2 },
   destructiveButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     marginTop: 16, paddingVertical: 14, borderRadius: 24,

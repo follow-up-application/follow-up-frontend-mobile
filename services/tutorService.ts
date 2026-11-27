@@ -72,7 +72,7 @@ export async function buscarTutorPorDni(dni: string): Promise<Tutor | null> {
     }
 }
 
-/** GET /tutores/{id}/alumnos — el controller no implementa alumnos, responde 500. */
+/** GET /tutores/{id}/alumnos — alumnos a cargo del tutor. Administrador y tutor. */
 export function getAlumnosByTutor(id: string): Promise<Alumno[]> {
     return apiRequest<Alumno[]>(`/tutores/${id}/alumnos`);
 }
