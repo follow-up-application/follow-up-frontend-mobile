@@ -5,7 +5,7 @@ import { PrimaryButton } from '@/components/atoms/PrimaryButton';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '@/config/api';
 
@@ -63,7 +63,7 @@ export default function ValidarCodigoScreen() {
 
       const data: AlumnoValidado = await response.json();
       setAlumno(data);
-    } catch (error) {
+    } catch {
       setErrorGeneral('No se pudo conectar con el servidor. Verifica tu conexión.');
     } finally {
       setLoading(false);
