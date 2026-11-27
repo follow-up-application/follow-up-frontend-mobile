@@ -14,7 +14,14 @@ export type RegisterTutorRequest = {
     password: string;
 };
 
-/** POST /tutores — alta directa del administrador (no funciona en el backend). */
-export type CreateTutorRequest = RegisterTutorRequest;
+/** POST /tutores — alta directa del administrador, sin código institucional. */
+export type CreateTutorRequest = {
+    first_name: string;
+    last_name: string;
+    dni: number;
+    telephone: string;
+    email: string;
+    password?: string;
+};
 
 export type UpdateTutorRequest = Partial<CreateTutorRequest>;
