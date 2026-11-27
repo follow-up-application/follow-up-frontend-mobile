@@ -1,7 +1,7 @@
 import { PrimaryButton } from '@/components/atoms/PrimaryButton';
 import { Colors } from '@/constants/Colors';
 import { ApiRequestError, mensajeDeError } from '@/services/httpClient';
-import { getUsuario, inhabilitarUsuario } from '@/services/userService';
+import { getUsuario } from '@/services/userService';
 import type { ApiUser } from '@/types/auth';
 import { getSession } from '@/utils/session';
 import { colorPorRol, etiquetaRol } from '@/utils/usuarios';
@@ -10,7 +10,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,7 +27,6 @@ export default function UsuarioDetalleScreen() {
 
   const [usuario, setUsuario] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [inhabilitando, setInhabilitando] = useState(false);
   const [error, setError] = useState('');
 
   const cargarUsuario = useCallback(async () => {
@@ -78,48 +76,6 @@ export default function UsuarioDetalleScreen() {
       cargarUsuario();
     }, [cargarUsuario])
   );
-
-  const inhabilitar = async () => {
-    if (!id) {
-      return;
-    }
-
-    setInhabilitando(true);
-
-    try {
-      await inhabilitarUsuario(id);
-
-      Alert.alert('Usuario inhabilitado', 'El usuario no podrá iniciar sesión.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (err) {
-      if (err instanceof ApiRequestError && err.status === 401) {
-        router.replace('/login');
-        return;
-      }
-
-      Alert.alert('Error', mensajeDeError(err, 'No se pudo inhabilitar el usuario.'));
-    } finally {
-      setInhabilitando(false);
-    }
-  };
-
-  const confirmarInhabilitacion = () => {
-    if (!usuario) {
-      return;
-    }
-
-    const nombre = `${usuario.firstName} ${usuario.lastName}`.trim();
-
-    Alert.alert(
-      'Inhabilitar usuario',
-      `¿Estás seguro de que deseas inhabilitar a ${nombre}? Esta acción no se puede deshacer desde la app.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Inhabilitar', style: 'destructive', onPress: inhabilitar },
-      ]
-    );
-  };
 
   return (
     <View style={styles.root}>
@@ -209,22 +165,6 @@ export default function UsuarioDetalleScreen() {
                 })}
               />
             ) : null}
-
-            <TouchableOpacity
-              style={styles.destructiveButton}
-              activeOpacity={0.8}
-              disabled={inhabilitando}
-              onPress={confirmarInhabilitacion}
-            >
-              {inhabilitando ? (
-                <ActivityIndicator color={Colors.error} />
-              ) : (
-                <>
-                  <MaterialIcons name="block" size={20} color={Colors.error} />
-                  <Text style={styles.destructiveButtonText}>Inhabilitar usuario</Text>
-                </>
-              )}
-            </TouchableOpacity>
           </ScrollView>
         ) : null}
       </SafeAreaView>
@@ -273,10 +213,4 @@ const styles = StyleSheet.create({
   filaLabel: { fontSize: 14, color: Colors.secondary },
   filaValue: { flex: 1, fontSize: 14, fontWeight: '600', color: Colors.neutral, textAlign: 'right' },
   idValue: { fontSize: 12 },
-  destructiveButton: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    marginTop: 16, paddingVertical: 14, borderRadius: 24,
-    borderWidth: 1, borderColor: Colors.error, backgroundColor: `${Colors.error}10`,
-  },
-  destructiveButtonText: { fontSize: 15, fontWeight: '600', color: Colors.error },
 });
